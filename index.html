@@ -605,6 +605,18 @@ function normalizeHtmlBlock(txt) {
   return s.split(/\n\s*\n/).map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`).join('');
 }
 
+function htmlToEditableText(html) {
+  const s = String(html || '').trim();
+  if (!s) return '';
+  if (!/<(p|div|br|ul|ol|li|strong|em)\b/i.test(s)) return s;
+  return s
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/^<p[^>]*>/i, '')
+    .replace(/<\/p>$/i, '')
+    .trim();
+}
+
 function nextQuestionId() {
   const maxId = QUESTIONS.reduce((m, q) => Math.max(m, Number(q.id) || 0), 0);
   return maxId + 1;
@@ -630,7 +642,13 @@ function sanitizeQuestion(raw, fallbackId, inheritedMeta = {}) {
   ).trim();
 
   const fase = String(raw.fase ?? meta.fase ?? inheritedMeta.fase ?? '').trim();
-  const assuntoBase = String(raw.assunto ?? raw.topico ?? raw.tópico ?? 'Geral').trim() || 'Geral';
+  let assuntoBase = '';
+  const rawAssunto = raw.assunto ?? raw.assuntos ?? raw.topico ?? raw.tópico;
+  if (Array.isArray(rawAssunto)) {
+    assuntoBase = rawAssunto.map(a => String(a || '').trim()).filter(Boolean).join(', ') || 'Geral';
+  } else {
+    assuntoBase = String(rawAssunto ?? 'Geral').trim() || 'Geral';
+  }
   const assunto = fase && !assuntoBase.toLowerCase().includes(fase.toLowerCase())
     ? `${assuntoBase} (${fase})`
     : assuntoBase;
@@ -703,7 +721,9 @@ function rebuildQuestionsBank() {
     saved.forEach(item => {
       const check = sanitizeQuestion(item, nextId);
       if (check.question) {
-        if (map.has(String(check.question.id))) check.question.id = nextId;
+        const qIdStr = String(check.question.id);
+        const isBaseOverride = BASE_QUESTIONS.some(bq => String(bq.id) === qIdStr);
+        if (map.has(qIdStr) && !isBaseOverride) check.question.id = nextId;
         nextId = Math.max(nextId + 1, (Number(check.question.id) || 0) + 1);
         const qObj = { ...check.question, custom: true };
         if (!deletedQuestionIds.has(String(qObj.id))) {
@@ -750,6 +770,27 @@ function addQuestionsToBank(newList) {
   return added.length;
 }
 
+function updateQuestionInBank(qid, updatedQuestion) {
+  const idStr = String(qid);
+  const item = { ...updatedQuestion, id: qid, custom: true };
+  const idx = customQuestions.findIndex(q => String(q.id) === idStr);
+  if (idx >= 0) {
+    customQuestions[idx] = item;
+  } else {
+    customQuestions.push(item);
+  }
+  if (deletedQuestionIds.has(idStr)) {
+    deletedQuestionIds.delete(idStr);
+    lsSet(DELETED_Q_KEY, Array.from(deletedQuestionIds));
+  }
+  const persisted = lsSet(CUSTOM_Q_KEY, customQuestions);
+  if (!persisted) {
+    toast('Aviso: armazenamento cheio! Exporte o JSON para não perder alterações.', 'bad');
+  }
+  rebuildQuestionsBank();
+  return true;
+}
+
 async function deleteQuestionById(qid) {
   const q = getQ(qid);
   if (!q) return;
@@ -757,6 +798,10 @@ async function deleteQuestionById(qid) {
   if (!(await askConfirm(`Excluir esta questão permanentemente?\n\n${label}`, 'Excluir'))) return;
 
   const idStr = String(q.id);
+  if (String(QBuilder.editingId) === idStr) {
+    cancelEditQuestion();
+  }
+
   const prevCustomLen = customQuestions.length;
   customQuestions = customQuestions.filter(item => String(item.id) !== idStr);
 
@@ -1138,6 +1183,8 @@ const F = { list: [], sort: 'xp', selected: null, loading: false, error: null, a
 const P = { editing: false, error: null };
 const QBuilder = {
   mode: 'single',
+  editingId: null,
+  assuntoSearch: '',
   bulkText: '',
   jsonText: '',
   report: null,
@@ -1311,7 +1358,7 @@ function updateHeader(animate) {
 }
 
 /* =====================================================================
-   VIEW: ADICIONAR & IMPORTAR QUESTÕES (COM MÚLTIPLOS ASSUNTOS E CRIAÇÃO)
+   VIEW: ADICIONAR, EDITAR & IMPORTAR QUESTÕES
    ===================================================================== */
 const SAMPLE_BULK = `BANCA: EFOMM | ANO: 2025 | MATERIA: Matemática | ASSUNTO: Trigonometria, Funções
 ENUNCIADO: Calcule o valor de $\\sin 15^\\circ + \\cos 75^\\circ$.
@@ -1517,6 +1564,56 @@ function parseJsonQuestions(rawJson) {
   return { valid, errors, totalBlocks: arr.length };
 }
 
+function resetDraftFields(keepMeta = false) {
+  const prev = QBuilder.draft;
+  QBuilder.editingId = null;
+  QBuilder.assuntoSearch = '';
+  QBuilder.draft = {
+    banca: keepMeta ? prev.banca : 'EFOMM',
+    ano: keepMeta ? prev.ano : 2025,
+    materia: keepMeta ? prev.materia : 'Matemática',
+    assuntos: ['Geral'],
+    enunciado: '', imagem: '', imagemPos: 'enunciado',
+    A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
+  };
+}
+
+function startEditQuestion(qid) {
+  const q = getQ(qid);
+  if (!q) return;
+  QBuilder.mode = 'single';
+  QBuilder.editingId = q.id;
+  QBuilder.assuntoSearch = '';
+  QBuilder.report = null;
+  QBuilder.draft = {
+    banca: q.banca || 'EFOMM',
+    ano: q.ano || 2025,
+    materia: q.materia || 'Matemática',
+    assuntos: getQuestionAssuntos(q),
+    enunciado: htmlToEditableText(q.enunciado),
+    imagem: q.imagem || '',
+    imagemPos: q.imagemPos || 'enunciado',
+    A: (q.alternativas && q.alternativas.A) || '',
+    B: (q.alternativas && q.alternativas.B) || '',
+    C: (q.alternativas && q.alternativas.C) || '',
+    D: (q.alternativas && q.alternativas.D) || '',
+    E: (q.alternativas && q.alternativas.E) || '',
+    gabarito: q.gabarito || 'C',
+    resolucao: htmlToEditableText(q.resolucao)
+  };
+  renderAddQuestions();
+  const rootEl = $('#addQuestionsRoot');
+  if (rootEl) rootEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast(`✏️ Editando questão #${esc(q.id)} (${esc(q.banca)} ${esc(q.ano)})`, 'level');
+}
+
+function cancelEditQuestion() {
+  resetDraftFields(false);
+  QBuilder.report = null;
+  renderAddQuestions();
+  toast('Edição cancelada', 'bad');
+}
+
 function syncDraftFromForm() {
   const form = document.querySelector('form[data-form="addSingle"]');
   if (!form) return;
@@ -1530,6 +1627,8 @@ function syncDraftFromForm() {
   LETTERS.forEach(l => { QBuilder.draft[l] = fd.get('alt_' + l) ?? QBuilder.draft[l]; });
   const posEl = $('#qImgPos');
   if (posEl) QBuilder.draft.imagemPos = posEl.value;
+  const searchAssEl = $('#draftAssuntoSearch');
+  if (searchAssEl) QBuilder.assuntoSearch = searchAssEl.value;
 }
 
 function getAllAvailableAssuntosList() {
@@ -1537,7 +1636,32 @@ function getAllAvailableAssuntosList() {
   QUESTIONS.forEach(q => {
     getQuestionAssuntos(q).forEach(a => set.add(a));
   });
+  (QBuilder.draft.assuntos || []).forEach(a => {
+    if (String(a || '').trim()) set.add(String(a).trim());
+  });
   return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+function renderDraftAssuntosCheckboxes() {
+  const allAssuntos = getAllAvailableAssuntosList();
+  const draftAssuntos = Array.isArray(QBuilder.draft.assuntos) ? QBuilder.draft.assuntos : [QBuilder.draft.assunto || 'Geral'];
+  const term = (QBuilder.assuntoSearch || '').trim().toLowerCase();
+
+  const filtered = term
+    ? allAssuntos.filter(ast => ast.toLowerCase().includes(term) || draftAssuntos.includes(ast))
+    : allAssuntos;
+
+  if (!filtered.length) {
+    return `<span class="text-xs text-slate-500 dark:text-slate-400">Nenhum assunto encontrado para "${esc(QBuilder.assuntoSearch)}".</span>`;
+  }
+
+  return filtered.map(ast => {
+    const checked = draftAssuntos.includes(ast);
+    return `<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer transition ${checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400'}">
+      <input type="checkbox" name="draftAssunto" value="${esc(ast)}" ${checked ? 'checked' : ''} class="hidden">
+      ${esc(ast)}
+    </label>`;
+  }).join('');
 }
 
 function renderManageQuestionsSection() {
@@ -1559,26 +1683,36 @@ function renderManageQuestionsSection() {
   const rowsHtml = filtered.length
     ? filtered.map(q => {
         const isCustom = !!q.custom;
+        const isBeingEdited = QBuilder.editingId !== null && String(QBuilder.editingId) === String(q.id);
         const qAssuntosStr = getQuestionAssuntos(q).join(', ');
         return `
-          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 p-3.5 flex items-start justify-between gap-3">
+          <div class="rounded-xl border ${isBeingEdited ? 'border-amber-500 ring-2 ring-amber-500/25 bg-amber-500/5' : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40'} p-3.5 flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-1.5 mb-1">
                 <span class="px-2 py-0.5 rounded-md border text-[11px] font-bold ${BANCA_STYLE[q.banca] || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700'}">${esc(q.banca)}</span>
                 <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">${esc(q.ano)}</span>
                 <span class="px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-[11px] font-semibold">${esc(q.materia)}</span>
                 <span class="text-xs text-slate-500 dark:text-slate-400">· ${esc(qAssuntosStr)}</span>
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isCustom ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}">${isCustom ? 'Sua questão' : 'Base'}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isCustom ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}">${isCustom ? 'Personalizada' : 'Base'}</span>
                 <span class="text-[11px] text-slate-400">Gab: <strong>${esc(q.gabarito)}</strong></span>
+                ${isBeingEdited ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white">Editando agora</span>' : ''}
               </div>
               <div class="enunciado text-sm text-slate-700 dark:text-slate-200 line-clamp-2 overflow-hidden">${q.enunciado || '<em>Questão com imagem</em>'}</div>
             </div>
-            <button type="button" data-act="deleteQuestion" data-qid="${esc(q.id)}"
-              class="shrink-0 px-3 py-2 rounded-xl border border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition flex items-center gap-1.5"
-              title="Excluir esta questão">
-              <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
-              <span class="hidden sm:inline">Excluir</span>
-            </button>
+            <div class="shrink-0 flex items-center gap-1.5">
+              <button type="button" data-act="editQuestion" data-qid="${esc(q.id)}"
+                class="px-3 py-2 rounded-xl border border-indigo-500/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-semibold transition flex items-center gap-1.5"
+                title="Editar esta questão">
+                <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                <span class="hidden sm:inline">Editar</span>
+              </button>
+              <button type="button" data-act="deleteQuestion" data-qid="${esc(q.id)}"
+                class="px-3 py-2 rounded-xl border border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition flex items-center gap-1.5"
+                title="Excluir esta questão">
+                <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                <span class="hidden sm:inline">Excluir</span>
+              </button>
+            </div>
           </div>`;
       }).join('')
     : `<div class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-6 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -1590,13 +1724,13 @@ function renderManageQuestionsSection() {
       <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <h2 class="text-base font-extrabold flex items-center gap-2">
-            <i data-lucide="list-checks" class="h-4 w-4 text-indigo-500"></i> Gerenciar e Excluir Questões Individualmente
+            <i data-lucide="list-checks" class="h-4 w-4 text-indigo-500"></i> Gerenciar, Editar e Excluir Questões
           </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Clique em <strong>Excluir</strong> ao lado da questão desejada para removê-la do banco.</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Clique em <strong>Editar</strong> para alterar gabarito, assuntos, enunciado ou alternativas, ou em <strong>Excluir</strong> para remover a questão.</p>
         </div>
         <div class="flex flex-wrap gap-1.5">
           ${filterBtn('all', 'Todas', QUESTIONS.length)}
-          ${filterBtn('custom', 'Minhas', QUESTIONS.filter(q => q.custom).length)}
+          ${filterBtn('custom', 'Personalizadas', QUESTIONS.filter(q => q.custom).length)}
           ${filterBtn('base', 'Base', QUESTIONS.filter(q => !q.custom).length)}
         </div>
       </div>
@@ -1614,9 +1748,9 @@ function renderManageQuestionsSection() {
 
 function renderAddQuestions() {
   const d = QBuilder.draft;
-  const bancasList = CONCURSOS.filter(c => c !== 'Todos');
-  const allAssuntos = getAllAvailableAssuntosList();
-  const draftAssuntos = Array.isArray(d.assuntos) ? d.assuntos : [d.assunto || 'Geral'];
+  const isEditing = QBuilder.editingId !== null;
+  const bancasList = Array.from(new Set([...CONCURSOS.filter(c => c !== 'Todos'), d.banca].filter(Boolean)));
+  const materiasList = Array.from(new Set(['Matemática', 'Física', 'Química', 'Português', 'Inglês', d.materia].filter(Boolean)));
 
   const tabBtn = (m, label, icon) => {
     const active = QBuilder.mode === m;
@@ -1627,20 +1761,24 @@ function renderAddQuestions() {
 
   let bodyHtml = '';
   if (QBuilder.mode === 'single') {
-    const assuntoCheckboxes = allAssuntos.map(ast => {
-      const checked = draftAssuntos.includes(ast);
-      return `<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer transition ${checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'}">
-        <input type="checkbox" name="draftAssunto" value="${esc(ast)}" ${checked ? 'checked' : ''} class="hidden">
-        ${esc(ast)}
-      </label>`;
-    }).join('');
+    const editBanner = isEditing ? `
+      <div class="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 flex flex-wrap items-center justify-between gap-2 slide-up">
+        <div class="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
+          <i data-lucide="pencil-ruler" class="h-4 w-4 shrink-0"></i>
+          <span>Modo de edição ativo — alterando <strong>Questão #${esc(QBuilder.editingId)}</strong></span>
+        </div>
+        <button type="button" data-act="cancelEditQuestion" class="px-3 py-1.5 rounded-lg border border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 text-xs font-semibold transition">
+          Cancelar edição
+        </button>
+      </div>` : '';
 
     bodyHtml = `
       <form data-form="addSingle" onsubmit="return false" class="space-y-4">
+        ${editBanner}
         <div class="grid sm:grid-cols-4 gap-3">
           <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Banca / Concurso</span>
             <select name="banca" class="input mt-1">
-              ${bancasList.map(b => `<option value="${b}" ${d.banca === b ? 'selected' : ''}>${b}</option>`).join('')}
+              ${bancasList.map(b => `<option value="${esc(b)}" ${d.banca === b ? 'selected' : ''}>${esc(b)}</option>`).join('')}
             </select>
           </label>
           <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Ano</span>
@@ -1648,7 +1786,7 @@ function renderAddQuestions() {
           </label>
           <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Matéria</span>
             <select name="materia" class="input mt-1">
-              ${['Matemática', 'Física', 'Química', 'Português', 'Inglês'].map(m => `<option value="${m}" ${d.materia === m ? 'selected' : ''}>${m}</option>`).join('')}
+              ${materiasList.map(m => `<option value="${esc(m)}" ${d.materia === m ? 'selected' : ''}>${esc(m)}</option>`).join('')}
             </select>
           </label>
           <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Gabarito</span>
@@ -1659,10 +1797,23 @@ function renderAddQuestions() {
         </div>
 
         <div class="space-y-2">
-          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Assuntos / Tópicos (Selecione um ou mais ou crie um novo)</span>
-          <div class="flex flex-wrap gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-            ${assuntoCheckboxes}
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Assuntos / Tópicos (Selecione um ou mais ou crie um novo)</span>
+            <span class="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">${(d.assuntos || []).length} selecionado(s)</span>
           </div>
+
+          <div class="relative">
+            <i data-lucide="search" class="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input id="draftAssuntoSearch" type="text" value="${esc(QBuilder.assuntoSearch)}"
+              class="input !pl-9 !pr-20 !py-2 !text-xs" placeholder="Pesquisar assunto existente (ex.: Logaritmos, Geometria, Óptica)...">
+            ${QBuilder.assuntoSearch ? `<button type="button" data-act="clearDraftAssuntoSearch"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Limpar</button>` : ''}
+          </div>
+
+          <div id="draftAssuntosContainer" class="flex flex-wrap gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 max-h-40 overflow-y-auto">
+            ${renderDraftAssuntosCheckboxes()}
+          </div>
+
           <div class="flex gap-2 pt-1">
             <input id="newAssuntoInput" type="text" class="input !py-1.5 !text-xs flex-1" placeholder="Criar novo assunto (ex.: Termodinâmica)...">
             <button type="button" data-act="addNewAssunto" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition flex items-center gap-1.5">
@@ -1711,10 +1862,12 @@ function renderAddQuestions() {
         </label>
 
         <div class="flex flex-wrap gap-2 pt-1">
-          <button type="button" data-act="submitForm" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition flex items-center gap-2">
-            <i data-lucide="plus-circle" class="h-4 w-4"></i> Salvar questão no banco
+          <button type="button" data-act="submitForm" class="px-5 py-2.5 rounded-xl ${isEditing ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-bold text-sm transition flex items-center gap-2">
+            <i data-lucide="${isEditing ? 'save' : 'plus-circle'}" class="h-4 w-4"></i> ${isEditing ? 'Salvar alterações da questão' : 'Salvar questão no banco'}
           </button>
-          <button type="button" data-act="clearDraft" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Limpar campos</button>
+          ${isEditing
+            ? `<button type="button" data-act="cancelEditQuestion" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancelar edição</button>`
+            : `<button type="button" data-act="clearDraft" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Limpar campos</button>`}
         </div>
       </form>`;
   } else if (QBuilder.mode === 'bulk') {
@@ -1756,9 +1909,12 @@ function renderAddQuestions() {
   let reportHtml = '';
   if (QBuilder.report) {
     const rep = QBuilder.report;
+    const msg = rep.updated
+      ? 'Questão atualizada com sucesso no banco!'
+      : `${rep.added} questão(ões) adicionada(s) de ${rep.totalBlocks} bloco(s) analisado(s).`;
     reportHtml = `
       <div class="mt-4 rounded-xl border ${rep.errors.length ? 'border-amber-500/40 bg-amber-500/10' : 'border-emerald-500/40 bg-emerald-500/10'} p-4 text-sm slide-up">
-        <div class="font-bold">${rep.added} questão(ões) adicionada(s) de ${rep.totalBlocks} bloco(s) analisado(s).</div>
+        <div class="font-bold">${msg}</div>
         ${rep.errors.length ? `<ul class="mt-2 list-disc pl-5 text-xs text-rose-600 dark:text-rose-300 space-y-1">${rep.errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul>` : ''}
       </div>`;
   }
@@ -1766,22 +1922,22 @@ function renderAddQuestions() {
   $('#addQuestionsRoot').innerHTML = `
     <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-extrabold tracking-tight">Adicionar &amp; Importar Questões</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400">Banco ativo: <strong>${QUESTIONS.length}</strong> questões (${customQuestions.length} adicionadas por você neste navegador).</p>
+        <h1 class="text-2xl font-extrabold tracking-tight">Adicionar, Editar &amp; Importar Questões</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Banco ativo: <strong>${QUESTIONS.length}</strong> questões (${customQuestions.length} personalizadas neste navegador).</p>
       </div>
       <div class="flex flex-wrap gap-2">
         <button data-act="exportJson" class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition">
           <i data-lucide="download" class="h-4 w-4 text-indigo-500"></i> Copiar / Baixar JSON
         </button>
         ${customQuestions.length ? `<button data-act="clearCustomQuestions" class="px-3.5 py-2 rounded-xl border border-rose-500/40 text-rose-500 hover:bg-rose-500/10 text-xs font-semibold flex items-center gap-1.5 transition">
-          <i data-lucide="trash-2" class="h-4 w-4"></i> Remover minhas questões (${customQuestions.length})
+          <i data-lucide="trash-2" class="h-4 w-4"></i> Remover personalizadas (${customQuestions.length})
         </button>` : ''}
       </div>
     </div>
 
     <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
       <div class="flex flex-wrap gap-2 mb-5">
-        ${tabBtn('single', 'Cadastro Avulso (+ Imagem)', 'file-plus')}
+        ${tabBtn('single', isEditing ? `Editando Questão #${QBuilder.editingId}` : 'Cadastro Avulso (+ Imagem)', isEditing ? 'pencil' : 'file-plus')}
         ${tabBtn('bulk', 'Texto em Massa (===)', 'layers')}
         ${tabBtn('json', 'Importar JSON', 'code-2')}
       </div>
@@ -1814,7 +1970,11 @@ function syncImportBuffers() {
 function handleSingleAdd(form) {
   syncImportBuffers();
   const d = QBuilder.draft;
+  const isEditing = QBuilder.editingId !== null;
+  const targetId = isEditing ? QBuilder.editingId : nextQuestionId();
+
   const candidate = {
+    id: targetId,
     banca: d.banca,
     ano: d.ano,
     materia: d.materia,
@@ -1826,23 +1986,30 @@ function handleSingleAdd(form) {
     gabarito: d.gabarito,
     resolucao: d.resolucao
   };
-  const check = sanitizeQuestion(candidate, nextQuestionId());
+  const check = sanitizeQuestion(candidate, targetId);
   if (check.error) {
     QBuilder.report = { added: 0, totalBlocks: 1, errors: [check.error] };
     renderAddQuestions();
     return toast(esc(check.error), 'bad');
   }
-  const added = addQuestionsToBank([check.question]);
-  QBuilder.draft = {
-    banca: candidate.banca, ano: candidate.ano, materia: candidate.materia, assuntos: ['Geral'],
-    enunciado: '', imagem: '', imagemPos: 'enunciado',
-    A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
-  };
-  QBuilder.report = { added, totalBlocks: 1, errors: [] };
-  applyFilters();
-  render();
-  renderAddQuestions();
-  toast(`✅ ${added} questão adicionada ao banco!`, 'good');
+
+  if (isEditing) {
+    updateQuestionInBank(targetId, check.question);
+    resetDraftFields(false);
+    QBuilder.report = { added: 0, updated: true, totalBlocks: 1, errors: [] };
+    applyFilters();
+    render();
+    renderAddQuestions();
+    toast(`✅ Questão #${esc(targetId)} atualizada!`, 'good');
+  } else {
+    const added = addQuestionsToBank([check.question]);
+    resetDraftFields(true);
+    QBuilder.report = { added, totalBlocks: 1, errors: [] };
+    applyFilters();
+    render();
+    renderAddQuestions();
+    toast(`✅ ${added} questão adicionada ao banco!`, 'good');
+  }
 }
 
 function handleBulkImport() {
@@ -1892,7 +2059,8 @@ function exportBankJson() {
 }
 
 async function clearCustomQuestions() {
-  if (!(await askConfirm(`Remover todas as ${customQuestions.length} questões adicionadas por você? As questões base permanecem.`, 'Remover'))) return;
+  if (!(await askConfirm(`Remover todas as ${customQuestions.length} questões personalizadas? As questões base permanecem.`, 'Remover'))) return;
+  if (QBuilder.editingId !== null) resetDraftFields(false);
   lsDel(CUSTOM_Q_KEY);
   rebuildQuestionsBank();
   QBuilder.report = null;
@@ -2592,6 +2760,13 @@ document.addEventListener('input', e => {
     renderNav();
     renderQuestion();
   }
+  if (e.target && e.target.id === 'draftAssuntoSearch') {
+    QBuilder.assuntoSearch = e.target.value;
+    const container = $('#draftAssuntosContainer');
+    if (container) {
+      container.innerHTML = renderDraftAssuntosCheckboxes();
+    }
+  }
   if (e.target && e.target.id === 'qManageSearch') {
     QBuilder.manageSearch = e.target.value;
     const box = $('#manageQuestionsBox');
@@ -2611,6 +2786,10 @@ document.addEventListener('input', e => {
 });
 
 document.addEventListener('change', e => {
+  if (e.target && e.target.name === 'draftAssunto') {
+    syncImportBuffers();
+    renderAddQuestions();
+  }
   if (e.target && e.target.id === 'qImgFile') {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -2618,7 +2797,7 @@ document.addEventListener('change', e => {
       e.target.value = '';
       return toast('Imagem grande demais (use até ~1,5 MB)', 'bad');
     }
-    syncDraftFromForm();
+    syncImportBuffers();
     const reader = new FileReader();
     reader.onload = () => {
       QBuilder.draft.imagem = String(reader.result || '');
@@ -2701,12 +2880,17 @@ document.addEventListener('click', e => {
     case 'confirmYes': closeConfirm(true); break;
     case 'confirmNo': closeConfirm(false); break;
     case 'removeDraftImg':
-      syncDraftFromForm();
+      syncImportBuffers();
       QBuilder.draft.imagem = '';
       renderAddQuestions();
       break;
+    case 'clearDraftAssuntoSearch':
+      syncImportBuffers();
+      QBuilder.assuntoSearch = '';
+      renderAddQuestions();
+      break;
     case 'addNewAssunto':
-      syncDraftFromForm();
+      syncImportBuffers();
       const inputNew = $('#newAssuntoInput');
       if (inputNew) {
         const val = inputNew.value.trim();
@@ -2714,6 +2898,7 @@ document.addEventListener('click', e => {
           if (!QBuilder.draft.assuntos.includes(val)) {
             QBuilder.draft.assuntos.push(val);
           }
+          QBuilder.assuntoSearch = '';
           inputNew.value = '';
           renderAddQuestions();
           toast(`Assunto "${esc(val)}" criado e selecionado!`, 'good');
@@ -2729,18 +2914,18 @@ document.addEventListener('click', e => {
       renderAddQuestions();
       break;
     case 'clearDraft':
-      QBuilder.draft = {
-        banca: 'EFOMM', ano: 2025, materia: 'Matemática', assuntos: ['Geral'],
-        enunciado: '', imagem: '', imagemPos: 'enunciado',
-        A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
-      };
+      resetDraftFields(false);
       QBuilder.report = null;
       renderAddQuestions();
+      break;
+    case 'cancelEditQuestion':
+      cancelEditQuestion();
       break;
     case 'runBulkImport': handleBulkImport(); break;
     case 'runJsonImport': handleJsonImport(); break;
     case 'exportJson': exportBankJson(); break;
     case 'clearCustomQuestions': clearCustomQuestions(); break;
+    case 'editQuestion': startEditQuestion(a.dataset.qid); break;
     case 'deleteQuestion': deleteQuestionById(a.dataset.qid); break;
   }
 });
@@ -2755,6 +2940,16 @@ document.addEventListener('contextmenu', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (confirmOpen()) return closeConfirm(false); if (authOpen()) return closeAuth(); }
   if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+    if (e.target.id === 'newAssuntoInput') {
+      e.preventDefault();
+      const btn = document.querySelector('[data-act="addNewAssunto"]');
+      if (btn) btn.click();
+      return;
+    }
+    if (e.target.id === 'draftAssuntoSearch' || e.target.id === 'qManageSearch' || e.target.id === 'fAssuntoSearch') {
+      e.preventDefault();
+      return;
+    }
     const form = e.target.closest('form[data-form]');
     if (form) { e.preventDefault(); runForm(form); return; }
   }
