@@ -1104,7 +1104,7 @@ const SocialSb = {
     const s = (query || '').trim();
     if (EMAIL_RE.test(s)) return { error: 'No modo Supabase, adicione por @usuario ou #código (e-mails não são públicos).' };
     const handle = s.replace(/^@/, '').toLowerCase();
-    const code = (s.startsWith('#') ? s : '#' + s).toUpperCase();
+    const code = (s.startsWith('#`') ? s : '#' + s).toUpperCase();
     let row = null;
     if (!s.startsWith('#') && HANDLE_RE.test(handle)) {
       const r = await sbClient.from('profiles').select(SB_PUBLIC_COLS).eq('handle', handle).maybeSingle();
@@ -1144,7 +1144,7 @@ const QBuilder = {
   manageFilter: 'all',
   manageSearch: '',
   draft: {
-    banca: 'EFOMM', ano: 2025, materia: 'Matemática', assunto: '',
+    banca: 'EFOMM', ano: 2025, materia: 'Matemática', assuntos: ['Geral'],
     enunciado: '', imagem: '', imagemPos: 'enunciado',
     A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
   }
@@ -1176,13 +1176,20 @@ function baseFilteredQuestions() {
   );
 }
 
+function getQuestionAssuntos(q) {
+  if (Array.isArray(q.assuntos)) return q.assuntos;
+  if (typeof q.assunto === 'string' && q.assunto.trim()) {
+    return q.assunto.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return ['Geral'];
+}
+
 function availableAssuntos() {
   const qTerm = (state.assuntoQuery || '').trim().toLowerCase();
-  const set = new Set(
-    baseFilteredQuestions()
-      .map(q => String(q.assunto || '').trim())
-      .filter(Boolean)
-  );
+  const set = new Set();
+  baseFilteredQuestions().forEach(q => {
+    getQuestionAssuntos(q).forEach(a => set.add(a));
+  });
   let list = Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
   if (qTerm) {
     list = list.filter(a => a.toLowerCase().includes(qTerm));
@@ -1199,22 +1206,27 @@ function applyFilters() {
   const validYears = availableYears();
   if (!validYears.includes(String(state.ano))) state.ano = 'Todos';
 
-  const allContextAssuntos = new Set(
-    baseFilteredQuestions()
-      .map(q => String(q.assunto || '').trim())
-      .filter(Boolean)
-  );
+  const allContextAssuntos = new Set();
+  baseFilteredQuestions().forEach(q => {
+    getQuestionAssuntos(q).forEach(a => allContextAssuntos.add(a));
+  });
   state.assuntos = state.assuntos.filter(a => allContextAssuntos.has(a));
 
   const qTerm = (state.assuntoQuery || '').trim().toLowerCase();
 
   state.list = QUESTIONS
-    .filter(q => (state.concursos.length === 0 || state.concursos.includes(q.banca))
-              && (state.ano === 'Todos' || String(q.ano) === String(state.ano))
-              && (state.materia === 'Todas' || q.materia === state.materia)
-              && (state.assuntos.length === 0 || state.assuntos.includes(q.assunto))
-              && (!qTerm || String(q.assunto || '').toLowerCase().includes(qTerm))
-              && statusOk(q))
+    .filter(q => {
+      if (state.concursos.length > 0 && !state.concursos.includes(q.banca)) return false;
+      if (state.ano !== 'Todos' && String(q.ano) !== String(state.ano)) return false;
+      if (state.materia !== 'Todas' && q.materia !== state.materia) return false;
+      
+      const qAssuntos = getQuestionAssuntos(q);
+      if (state.assuntos.length > 0 && !state.assuntos.some(a => qAssuntos.includes(a))) return false;
+      
+      if (qTerm && !qAssuntos.some(a => a.toLowerCase().includes(qTerm)) && !stripHtml(q.enunciado).toLowerCase().includes(qTerm)) return false;
+      
+      return statusOk(q);
+    })
     .map(q => q.id);
   state.idx = 0;
   state.selected = null;
@@ -1299,9 +1311,9 @@ function updateHeader(animate) {
 }
 
 /* =====================================================================
-   VIEW: ADICIONAR & IMPORTAR QUESTÕES (COM UPLOAD DE IMAGEM E EXCLUSÃO INDIVIDUAL)
+   VIEW: ADICIONAR & IMPORTAR QUESTÕES (COM MÚLTIPLOS ASSUNTOS E CRIAÇÃO)
    ===================================================================== */
-const SAMPLE_BULK = `BANCA: EFOMM | ANO: 2025 | MATERIA: Matemática | ASSUNTO: Trigonometria
+const SAMPLE_BULK = `BANCA: EFOMM | ANO: 2025 | MATERIA: Matemática | ASSUNTO: Trigonometria, Funções
 ENUNCIADO: Calcule o valor de $\\sin 15^\\circ + \\cos 75^\\circ$.
 A: $\\dfrac{\\sqrt{6}-\\sqrt{2}}{2}$
 B: $\\dfrac{\\sqrt{6}+\\sqrt{2}}{2}$
@@ -1331,7 +1343,7 @@ const SAMPLE_JSON = `{
   "questoes": [
     {
       "numero": 1,
-      "assunto": "Geometria Analítica",
+      "assunto": ["Geometria Analítica", "Cônicas"],
       "enunciado": "Considere uma elipse de excentricidade $e$.",
       "alternativas": {
         "A": "$\\\\dfrac{1}{2}$",
@@ -1513,12 +1525,19 @@ function syncDraftFromForm() {
   QBuilder.draft.ano = fd.get('ano') || QBuilder.draft.ano;
   QBuilder.draft.materia = fd.get('materia') || QBuilder.draft.materia;
   QBuilder.draft.gabarito = fd.get('gabarito') || QBuilder.draft.gabarito;
-  QBuilder.draft.assunto = fd.get('assunto') ?? QBuilder.draft.assunto;
   QBuilder.draft.enunciado = fd.get('enunciado') ?? QBuilder.draft.enunciado;
   QBuilder.draft.resolucao = fd.get('resolucao') ?? QBuilder.draft.resolucao;
   LETTERS.forEach(l => { QBuilder.draft[l] = fd.get('alt_' + l) ?? QBuilder.draft[l]; });
   const posEl = $('#qImgPos');
   if (posEl) QBuilder.draft.imagemPos = posEl.value;
+}
+
+function getAllAvailableAssuntosList() {
+  const set = new Set();
+  QUESTIONS.forEach(q => {
+    getQuestionAssuntos(q).forEach(a => set.add(a));
+  });
+  return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
 function renderManageQuestionsSection() {
@@ -1527,7 +1546,8 @@ function renderManageQuestionsSection() {
     if (QBuilder.manageFilter === 'custom' && !q.custom) return false;
     if (QBuilder.manageFilter === 'base' && q.custom) return false;
     if (!search) return true;
-    const hay = `${q.id} ${q.banca} ${q.ano} ${q.materia} ${q.assunto} ${stripHtml(q.enunciado)}`.toLowerCase();
+    const qAssuntosStr = getQuestionAssuntos(q).join(', ');
+    const hay = `${q.id} ${q.banca} ${q.ano} ${q.materia} ${qAssuntosStr} ${stripHtml(q.enunciado)}`.toLowerCase();
     return hay.includes(search);
   });
 
@@ -1539,6 +1559,7 @@ function renderManageQuestionsSection() {
   const rowsHtml = filtered.length
     ? filtered.map(q => {
         const isCustom = !!q.custom;
+        const qAssuntosStr = getQuestionAssuntos(q).join(', ');
         return `
           <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 p-3.5 flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
@@ -1546,7 +1567,7 @@ function renderManageQuestionsSection() {
                 <span class="px-2 py-0.5 rounded-md border text-[11px] font-bold ${BANCA_STYLE[q.banca] || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700'}">${esc(q.banca)}</span>
                 <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">${esc(q.ano)}</span>
                 <span class="px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-[11px] font-semibold">${esc(q.materia)}</span>
-                <span class="text-xs text-slate-500 dark:text-slate-400">· ${esc(q.assunto)}</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">· ${esc(qAssuntosStr)}</span>
                 <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isCustom ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}">${isCustom ? 'Sua questão' : 'Base'}</span>
                 <span class="text-[11px] text-slate-400">Gab: <strong>${esc(q.gabarito)}</strong></span>
               </div>
@@ -1594,6 +1615,9 @@ function renderManageQuestionsSection() {
 function renderAddQuestions() {
   const d = QBuilder.draft;
   const bancasList = CONCURSOS.filter(c => c !== 'Todos');
+  const allAssuntos = getAllAvailableAssuntosList();
+  const draftAssuntos = Array.isArray(d.assuntos) ? d.assuntos : [d.assunto || 'Geral'];
+
   const tabBtn = (m, label, icon) => {
     const active = QBuilder.mode === m;
     return `<button data-qmode="${m}" class="px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition ${active ? 'bg-indigo-600 text-white shadow shadow-indigo-500/25' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-500'}">
@@ -1603,6 +1627,14 @@ function renderAddQuestions() {
 
   let bodyHtml = '';
   if (QBuilder.mode === 'single') {
+    const assuntoCheckboxes = allAssuntos.map(ast => {
+      const checked = draftAssuntos.includes(ast);
+      return `<label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer transition ${checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'}">
+        <input type="checkbox" name="draftAssunto" value="${esc(ast)}" ${checked ? 'checked' : ''} class="hidden">
+        ${esc(ast)}
+      </label>`;
+    }).join('');
+
     bodyHtml = `
       <form data-form="addSingle" onsubmit="return false" class="space-y-4">
         <div class="grid sm:grid-cols-4 gap-3">
@@ -1626,9 +1658,18 @@ function renderAddQuestions() {
           </label>
         </div>
 
-        <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Assunto / Tópico</span>
-          <input name="assunto" class="input mt-1" value="${esc(d.assunto)}" placeholder="Ex.: Números Complexos, Cinemática, Estequiometria...">
-        </label>
+        <div class="space-y-2">
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Assuntos / Tópicos (Selecione um ou mais ou crie um novo)</span>
+          <div class="flex flex-wrap gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+            ${assuntoCheckboxes}
+          </div>
+          <div class="flex gap-2 pt-1">
+            <input id="newAssuntoInput" type="text" class="input !py-1.5 !text-xs flex-1" placeholder="Criar novo assunto (ex.: Termodinâmica)...">
+            <button type="button" data-act="addNewAssunto" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition flex items-center gap-1.5">
+              <i data-lucide="plus" class="h-3.5 w-3.5"></i> Criar Assunto
+            </button>
+          </div>
+        </div>
 
         <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Enunciado (aceita LaTeX com $...$ ou $$...$$)</span>
           <textarea name="enunciado" rows="4" class="input mt-1 font-mono text-xs sm:text-sm" placeholder="Ex.: Determine o módulo de $z = 3 + 4i$...">${esc(d.enunciado)}</textarea>
@@ -1685,7 +1726,7 @@ function renderAddQuestions() {
             <i data-lucide="sparkles" class="h-3.5 w-3.5 text-indigo-500"></i> Preencher 2 questões de exemplo
           </button>
         </div>
-        <textarea id="bulkInput" rows="12" class="input font-mono text-xs leading-relaxed" placeholder="BANCA: EFOMM | ANO: 2025 | MATERIA: Matemática | ASSUNTO: Geometria&#10;ENUNCIADO: ...&#10;A: ...&#10;B: ...&#10;C: ...&#10;D: ...&#10;E: ...&#10;GABARITO: A&#10;RESOLUCAO: ...&#10;===&#10;...">${esc(QBuilder.bulkText)}</textarea>
+        <textarea id="bulkInput" rows="12" class="input font-mono text-xs leading-relaxed" placeholder="BANCA: EFOMM | ANO: 2025 | MATERIA: Matemática | ASSUNTO: Geometria, Funções&#10;ENUNCIADO: ...&#10;A: ...&#10;B: ...&#10;C: ...&#10;D: ...&#10;E: ...&#10;GABARITO: A&#10;RESOLUCAO: ...&#10;===&#10;...">${esc(QBuilder.bulkText)}</textarea>
         <div class="flex flex-wrap gap-2">
           <button data-act="runBulkImport" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition flex items-center gap-2">
             <i data-lucide="upload" class="h-4 w-4"></i> Importar questões em massa
@@ -1697,12 +1738,12 @@ function renderAddQuestions() {
     bodyHtml = `
       <div class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <p class="text-xs text-slate-500 dark:text-slate-400">Cole um <strong>array JSON</strong> ou objeto com <code>"prova"</code> + <code>"questoes"</code> (aceita campo opcional <code>"imagem"</code>).</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Cole um <strong>array JSON</strong> ou objeto com <code>"prova"</code> + <code>"questoes"</code> (aceita campo opcional <code>"imagem"</code> ou <code>"assunto"</code> como string ou lista).</p>
           <button data-act="fillJsonSample" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
             <i data-lucide="braces" class="h-3.5 w-3.5 text-indigo-500"></i> Preencher exemplo JSON
           </button>
         </div>
-        <textarea id="jsonInput" rows="12" class="input font-mono text-xs leading-relaxed" placeholder='{"prova":{"banca":"ITA","ano":2027,"materia":"Matemática"},"questoes":[{"numero":1,"assunto":"Álgebra","enunciado":"...","alternativas":{"A":"...","B":"...","C":"...","D":"...","E":"..."},"gabarito":"B","resolucao":"..."}]}'>${esc(QBuilder.jsonText)}</textarea>
+        <textarea id="jsonInput" rows="12" class="input font-mono text-xs leading-relaxed" placeholder='{"prova":{"banca":"ITA","ano":2027,"materia":"Matemática"},"questoes":[{"numero":1,"assunto":["Álgebra","Polinômios"],"enunciado":"...","alternativas":{"A":"...","B":"...","C":"...","D":"...","E":"..."},"gabarito":"B","resolucao":"..."}]}'>${esc(QBuilder.jsonText)}</textarea>
         <div class="flex flex-wrap gap-2">
           <button data-act="runJsonImport" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition flex items-center gap-2">
             <i data-lucide="upload" class="h-4 w-4"></i> Importar JSON
@@ -1755,7 +1796,15 @@ function renderAddQuestions() {
 }
 
 function syncImportBuffers() {
-  if (QBuilder.mode === 'single') syncDraftFromForm();
+  if (QBuilder.mode === 'single') {
+    syncDraftFromForm();
+    const form = document.querySelector('form[data-form="addSingle"]');
+    if (form) {
+      const checkedBoxes = form.querySelectorAll('input[name="draftAssunto"]:checked');
+      QBuilder.draft.assuntos = Array.from(checkedBoxes).map(cb => cb.value);
+      if (!QBuilder.draft.assuntos.length) QBuilder.draft.assuntos = ['Geral'];
+    }
+  }
   const bulkEl = $('#bulkInput');
   const jsonEl = $('#jsonInput');
   if (bulkEl) QBuilder.bulkText = bulkEl.value;
@@ -1763,13 +1812,13 @@ function syncImportBuffers() {
 }
 
 function handleSingleAdd(form) {
-  syncDraftFromForm();
+  syncImportBuffers();
   const d = QBuilder.draft;
   const candidate = {
     banca: d.banca,
     ano: d.ano,
     materia: d.materia,
-    assunto: d.assunto,
+    assunto: d.assuntos,
     enunciado: d.enunciado,
     imagem: d.imagem,
     imagemPos: d.imagemPos,
@@ -1785,7 +1834,7 @@ function handleSingleAdd(form) {
   }
   const added = addQuestionsToBank([check.question]);
   QBuilder.draft = {
-    banca: candidate.banca, ano: candidate.ano, materia: candidate.materia, assunto: '',
+    banca: candidate.banca, ano: candidate.ano, materia: candidate.materia, assuntos: ['Geral'],
     enunciado: '', imagem: '', imagemPos: 'enunciado',
     A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
   };
@@ -1948,6 +1997,8 @@ function renderQuestion() {
     ? `<div class="my-4"><img src="${q.imagem}" alt="Figura da questão" class="max-h-80 max-w-full rounded-xl border border-slate-200 dark:border-slate-800 object-contain bg-white p-1.5"></div>`
     : '';
 
+  const qAssuntosStr = getQuestionAssuntos(q).join(', ');
+
   const opts = LETTERS.filter(l => q.alternativas[l]).map(l => {
     const isStruck = struck.includes(l);
     const mark = answered && l === q.gabarito ? '<i data-lucide="check-circle-2" class="h-5 w-5 text-emerald-500 shrink-0"></i>'
@@ -2011,7 +2062,7 @@ function renderQuestion() {
         <span class="px-2.5 py-1 rounded-lg border text-xs font-bold ${BANCA_STYLE[q.banca] || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700'}">${esc(q.banca)}</span>
         <span class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300">${esc(q.ano)}</span>
         <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">${esc(q.materia)}</span>
-        <span class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">· ${esc(q.assunto)}</span>
+        <span class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">· ${esc(qAssuntosStr)}</span>
         <span class="ml-auto text-xs text-slate-500 dark:text-slate-400 font-medium">Questão ${state.idx + 1} de ${state.list.length}</span>
       </div>
 
@@ -2654,6 +2705,21 @@ document.addEventListener('click', e => {
       QBuilder.draft.imagem = '';
       renderAddQuestions();
       break;
+    case 'addNewAssunto':
+      syncDraftFromForm();
+      const inputNew = $('#newAssuntoInput');
+      if (inputNew) {
+        const val = inputNew.value.trim();
+        if (val) {
+          if (!QBuilder.draft.assuntos.includes(val)) {
+            QBuilder.draft.assuntos.push(val);
+          }
+          inputNew.value = '';
+          renderAddQuestions();
+          toast(`Assunto "${esc(val)}" criado e selecionado!`, 'good');
+        }
+      }
+      break;
     case 'fillBulkSample': QBuilder.bulkText = SAMPLE_BULK; QBuilder.report = null; renderAddQuestions(); break;
     case 'fillJsonSample': QBuilder.jsonText = SAMPLE_JSON; QBuilder.report = null; renderAddQuestions(); break;
     case 'clearImportBox':
@@ -2664,7 +2730,7 @@ document.addEventListener('click', e => {
       break;
     case 'clearDraft':
       QBuilder.draft = {
-        banca: 'EFOMM', ano: 2025, materia: 'Matemática', assunto: '',
+        banca: 'EFOMM', ano: 2025, materia: 'Matemática', assuntos: ['Geral'],
         enunciado: '', imagem: '', imagemPos: 'enunciado',
         A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
       };
@@ -2747,4 +2813,3 @@ window.addEventListener('DOMContentLoaded', async () => {
 </script>
 </body>
 </html>
-Processado e analisado em código
