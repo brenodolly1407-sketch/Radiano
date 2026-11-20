@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radiano — Questões para Concursos e Vestibulares</title>
+
+<script>
+  // Aplica o tema salvo antes da pintura para evitar "flash"
+  try {
+    var _t = JSON.parse(localStorage.getItem('radiano:theme') || 'null');
+    if (!_t) { var _s = JSON.parse(localStorage.getItem('radiano:v1') || '{}'); _t = _s.theme; }
+    if (_t === 'light') document.documentElement.classList.remove('dark');
+  } catch (e) {}
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- KaTeX + mhchem (química) + auto-render -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/mhchem.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- Supabase JS (só é usado se SUPABASE_URL e SUPABASE_ANON_KEY forem preenchidos; pode remover no modo demo) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+  .katex { font-size: 1.08em; }
+  .katex-display { overflow-x: auto; overflow-y: hidden; padding: .25rem 0; }
+  .enunciado p, .resolucao p { margin: 0 0 .75rem; }
+  .resolucao p:last-child, .enunciado p:last-child { margin-bottom: 0; }
+  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .pop { animation: pop .5s ease; }
+  @keyframes flicker { 0%,100% { transform: scale(1) rotate(-2deg); } 50% { transform: scale(1.12) rotate(2deg); } }
+  .streak-on svg { color: #f97316; fill: #fb923c; animation: flicker 1.6s ease-in-out infinite; }
+  .streak-off svg { color: #94a3b8; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .slide-up { animation: slideUp .3s ease; }
+  .bg-glow { background-image:
+      radial-gradient(60rem 30rem at 10% -10%, rgba(99,102,241,.14), transparent 60%),
+      radial-gradient(50rem 25rem at 100% 0%, rgba(16,185,129,.09), transparent 60%); }
+  .light-glow { background-image:
+      radial-gradient(60rem 30rem at 10% -10%, rgba(99,102,241,.10), transparent 60%),
+      radial-gradient(50rem 25rem at 100% 0%, rgba(16,185,129,.07), transparent 60%); }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.35); border-radius: 8px; }
+
+  /* Navegação */
+  .nav-btn { color: rgb(100 116 139); transition: background .15s, color .15s; }
+  .nav-btn:hover { color: #6366f1; }
+  .nav-btn[data-active="true"] { background: rgba(99,102,241,.14); color: #6366f1; }
+  .dark .nav-btn { color: rgb(148 163 184); }
+  .dark .nav-btn[data-active="true"] { color: #a5b4fc; }
+
+  /* Campos de formulário */
+  .input { width: 100%; border-radius: .75rem; border: 1px solid rgb(203 213 225); background: transparent;
+           padding: .65rem .9rem; font-size: .9rem; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .dark .input { border-color: rgb(51 65 85); }
+  select.input option { background: #ffffff; color: #0f172a; }
+  .dark select.input option { background: #0f172a; color: #f1f5f9; }
+  .input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.25); }
+  .input::placeholder { color: rgb(148 163 184); }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 light-glow dark:bg-glow antialiased pb-20 sm:pb-0">
+
+<!-- ============ HEADER: XP, OFENSIVA, CONTA + MENU ============ -->
+<header class="sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur">
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 h-16 flex items-center gap-2 sm:gap-3">
+    <div class="flex items-center gap-2 shrink-0">
+      <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center shadow-lg shadow-indigo-500/30">
+        <i data-lucide="sigma" class="h-5 w-5 text-white"></i>
+      </div>
+      <div class="hidden sm:block leading-tight">
+        <div class="font-extrabold tracking-tight text-lg">Radiano</div>
+        <div class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Concursos &amp; Vestibulares</div>
+      </div>
+    </div>
+
+    <div class="flex-1"></div>
+
+    <!-- Patente -->
+    <div class="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5" title="Sua patente atual">
+      <i data-lucide="shield" class="h-5 w-5 text-indigo-500"></i>
+      <div class="leading-tight">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Patente</div>
+        <div id="rankName" class="text-sm font-bold">Aluno</div>
+      </div>
+    </div>
+
+    <!-- XP -->
+    <div id="xpChip" class="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 sm:px-3 py-1.5" title="Pontos de experiência">
+      <i data-lucide="zap" class="h-5 w-5 text-amber-500"></i>
+      <div class="leading-tight">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden sm:block">XP</div>
+        <div class="text-sm font-bold"><span id="xpValue">0</span></div>
+      </div>
+    </div>
+
+    <!-- Streak -->
+    <div id="streakChip" class="streak-off flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 sm:px-3 py-1.5" title="Ofensiva diária">
+      <i data-lucide="flame" class="h-5 w-5"></i>
+      <div class="leading-tight">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden sm:block">Ofensiva</div>
+        <div class="text-sm font-bold"><span id="streakValue">0</span><span class="hidden sm:inline text-xs font-medium text-slate-500 dark:text-slate-400"> dias</span></div>
+      </div>
+    </div>
+
+    <!-- Conta -->
+    <button id="accountChip" data-act="account" class="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-indigo-400 px-2 sm:px-3 py-1.5 transition" title="Conta"></button>
+
+    <button id="themeBtn" class="h-10 w-10 grid place-items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Alternar tema" aria-label="Alternar tema">
+      <i data-lucide="sun" class="h-5 w-5 hidden dark:block"></i>
+      <i data-lucide="moon" class="h-5 w-5 dark:hidden"></i>
+    </button>
+  </div>
+
+  <!-- Menu superior (desktop/tablet) -->
+  <nav id="topNav" class="hidden sm:flex max-w-7xl mx-auto px-4 gap-1 pb-2">
+    <button data-route="questoes" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"><i data-lucide="book-open-check" class="h-4 w-4"></i> Questões</button>
+    <button data-route="adicionar" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"><i data-lucide="file-plus-2" class="h-4 w-4"></i> + Questões</button>
+    <button data-route="amigos" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"><i data-lucide="users" class="h-4 w-4"></i> Amigos &amp; Ranking</button>
+    <button data-route="perfil" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"><i data-lucide="user-round" class="h-4 w-4"></i> Perfil / Conta</button>
+  </nav>
+
+  <!-- Barra de progresso de patente -->
+  <div class="h-1 w-full bg-slate-200 dark:bg-slate-800">
+    <div id="rankBar" class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700" style="width:0%"></div>
+  </div>
+  <div class="max-w-7xl mx-auto px-4 py-1 text-[11px] text-slate-500 dark:text-slate-400 flex justify-between">
+    <span id="rankInfo"></span>
+    <span id="kbHint" class="hidden sm:inline">Atalhos: A–E escolhem · Enter responde · ← → navegam</span>
+  </div>
+</header>
+
+<!-- Menu inferior (mobile) -->
+<nav class="sm:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-4 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur">
+  <button data-route="questoes" class="nav-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold"><i data-lucide="book-open-check" class="h-5 w-5"></i> Questões</button>
+  <button data-route="adicionar" class="nav-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold"><i data-lucide="file-plus-2" class="h-5 w-5"></i> + Questões</button>
+  <button data-route="amigos" class="nav-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold"><i data-lucide="users" class="h-5 w-5"></i> Amigos</button>
+  <button data-route="perfil" class="nav-btn flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold"><i data-lucide="user-round" class="h-5 w-5"></i> Perfil</button>
+</nav>
+
+<!-- ============ VIEW: QUESTÕES ============ -->
+<main id="view-questoes" class="max-w-7xl mx-auto px-3 sm:px-4 py-5 grid lg:grid-cols-[300px_minmax(0,1fr)] gap-5">
+  <aside class="space-y-4 lg:sticky lg:top-40 self-start">
+    <button id="filtersToggle" class="lg:hidden w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 font-semibold">
+      <span class="flex items-center gap-2"><i data-lucide="sliders-horizontal" class="h-4 w-4"></i> Filtros</span>
+      <i data-lucide="chevron-down" class="h-4 w-4"></i>
+    </button>
+
+    <div id="filtersPanel" class="hidden lg:block space-y-4">
+      <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Concurso / Vestibular</h3>
+        <div id="fConcurso" class="flex flex-wrap gap-2"></div>
+      </section>
+      <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Ano</h3>
+        <div id="fAno" class="flex flex-wrap gap-2"></div>
+      </section>
+      <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Matéria</h3>
+        <div id="fMateria" class="flex flex-wrap gap-2"></div>
+      </section>
+      <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Status</h3>
+        <div id="fStatus" class="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1"></div>
+      </section>
+    </div>
+
+    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Navegador</h3>
+        <span id="listCount" class="text-xs text-slate-500 dark:text-slate-400"></span>
+      </div>
+      <div id="navPills" class="flex flex-wrap gap-2"></div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Seu desempenho</h3>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div><div id="stDone" class="text-xl font-extrabold">0</div><div class="text-[11px] text-slate-500 dark:text-slate-400">Resolvidas</div></div>
+        <div><div id="stHit" class="text-xl font-extrabold text-emerald-500">0</div><div class="text-[11px] text-slate-500 dark:text-slate-400">Acertos</div></div>
+        <div><div id="stRate" class="text-xl font-extrabold text-indigo-500">0%</div><div class="text-[11px] text-slate-500 dark:text-slate-400">Aproveit.</div></div>
+      </div>
+    </section>
+  </aside>
+
+  <section id="qArea" class="min-w-0"></section>
+</main>
+
+<!-- ============ VIEW: ADICIONAR & IMPORTAR QUESTÕES ============ -->
+<main id="view-adicionar" class="hidden max-w-6xl mx-auto px-3 sm:px-4 py-5">
+  <div id="addQuestionsRoot"></div>
+</main>
+
+<!-- ============ VIEW: AMIGOS & RANKING ============ -->
+<main id="view-amigos" class="hidden max-w-7xl mx-auto px-3 sm:px-4 py-5">
+  <div id="friendsRoot"></div>
+</main>
+
+<!-- ============ VIEW: PERFIL / CONTA ============ -->
+<main id="view-perfil" class="hidden max-w-5xl mx-auto px-3 sm:px-4 py-5">
+  <div id="profileRoot"></div>
+</main>
+
+<!-- ============ MODAL: ENTRAR / CRIAR CONTA ============ -->
+<div id="authModal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl slide-up">
+    <div class="flex items-start justify-between mb-4">
+      <div>
+        <h2 id="authTitle" class="text-xl font-extrabold">Entrar</h2>
+        <p id="authSub" class="text-sm text-slate-500 dark:text-slate-400"></p>
+      </div>
+      <button data-act="closeAuth" class="h-8 w-8 grid place-items-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fechar"><i data-lucide="x" class="h-4 w-4"></i></button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-4">
+      <button data-authtab="signin" class="py-2 rounded-lg text-sm font-semibold transition">Entrar</button>
+      <button data-authtab="signup" class="py-2 rounded-lg text-sm font-semibold transition">Criar conta</button>
+    </div>
+
+    <form id="authForm" data-form="auth" novalidate onsubmit="return false" class="space-y-3">
+      <div id="signupFields" class="space-y-3 hidden">
+        <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Nome de exibição</span>
+          <input name="name" class="input mt-1" placeholder="Ex.: Bruno Nogueira" maxlength="30" autocomplete="nickname"></label>
+        <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">@usuario <span class="font-normal">(opcional — deixe vazio para gerar)</span></span>
+          <input name="handle" class="input mt-1" placeholder="@bruno_n" maxlength="21" autocapitalize="none" autocomplete="off"></label>
+      </div>
+      <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">E-mail</span>
+        <input name="email" type="email" class="input mt-1" placeholder="voce@email.com" autocomplete="email"></label>
+      <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Senha</span>
+        <input name="password" type="password" class="input mt-1" placeholder="mínimo 6 caracteres" autocomplete="current-password"></label>
+      <p id="authError" class="hidden text-sm rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-300 px-3 py-2"></p>
+      <p id="authInfo" class="hidden text-sm rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 px-3 py-2"></p>
+      <button id="authSubmit" type="button" data-act="submitForm" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-bold transition">Entrar</button>
+    </form>
+    <p id="authModeNote" class="mt-4 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400"></p>
+  </div>
+</div>
+
+<!-- ============ MODAL: CONFIRMAÇÃO ============ -->
+<div id="confirmModal" class="hidden fixed inset-0 z-[70] items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm" role="alertdialog" aria-modal="true">
+  <div class="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-2xl slide-up">
+    <p id="confirmMsg" class="text-sm leading-relaxed mb-5"></p>
+    <div class="flex justify-end gap-2">
+      <button data-act="confirmNo" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancelar</button>
+      <button id="confirmYes" data-act="confirmYes" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold transition">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="fixed bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 items-center pointer-events-none w-[92vw] max-w-sm"></div>
+
+<script>
+/* =====================================================================
+   ★ CONFIGURAÇÃO DO SUPABASE AUTH ★
+   ===================================================================== */
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
+
+const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
+if (SUPABASE_URL && SUPABASE_ANON_KEY && !window.supabase) console.warn('Supabase configurado, mas a biblioteca não carregou. Usando modo demonstração.');
+const sbClient = USE_SUPABASE ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* =====================================================================
+   DADOS (MOCK) — Questões iniciais de Concursos Militares e Vestibulares
+   ===================================================================== */
+const BASE_QUESTIONS = [
+  {
+    id: 1, banca: 'AFA', ano: 2024, materia: 'Matemática', assunto: 'Números Complexos',
+    enunciado: String.raw`<p>Seja $i$ a unidade imaginária ($i^2=-1$). O valor da soma</p>
+      $$S = i + i^2 + i^3 + \cdots + i^{2026}$$
+      <p>é igual a:</p>`,
+    alternativas: {
+      A: String.raw`$0$`,
+      B: String.raw`$i$`,
+      C: String.raw`$-1 + i$`,
+      D: String.raw`$1 + i$`,
+      E: String.raw`$-1$`
+    },
+    gabarito: 'C',
+    resolucao: String.raw`<p><strong>Ideia:</strong> as potências de $i$ têm período 4: $i^1=i,\; i^2=-1,\; i^3=-i,\; i^4=1$ e $i^{k+4}=i^k$.</p>
+      <p>Cada bloco de quatro termos consecutivos soma $\;i-1-i+1=0$.</p>
+      <p>Como $2026 = 4\cdot 506 + 2$, os primeiros $2024$ termos formam $506$ blocos completos e somam $0$. Restam os dois últimos termos:</p>
+      $$S = i^{2025} + i^{2026} = i^{1} + i^{2} = i - 1.$$
+      <p><strong>Conferência pela soma da PG</strong> (razão $i$, primeiro termo $i$):</p>
+      $$S = i\cdot\frac{i^{2026}-1}{i-1} = \frac{-2i}{i-1}\cdot\frac{-i-1}{-i-1} = \frac{-2+2i}{2} = -1+i.$$
+      <p><strong>Gabarito: C</strong></p>`
+  },
+  {
+    id: 2, banca: 'EFOMM', ano: 2023, materia: 'Matemática', assunto: 'Logaritmos',
+    enunciado: String.raw`<p>Se $x>0$ satisfaz a equação</p>
+      $$\log_2 x + \log_4 x + \log_{16} x = 7,$$
+      <p>então o valor de $x$ é:</p>`,
+    alternativas: {
+      A: String.raw`$4$`,
+      B: String.raw`$8$`,
+      C: String.raw`$16$`,
+      D: String.raw`$32$`,
+      E: String.raw`$64$`
+    },
+    gabarito: 'C',
+    resolucao: String.raw`<p>Levando tudo para a base $2$ com a mudança de base $\log_{b}x=\dfrac{\log_2 x}{\log_2 b}$:</p>
+      $$\log_4 x = \frac{\log_2 x}{2}, \qquad \log_{16} x = \frac{\log_2 x}{4}.$$
+      <p>Substituindo na equação:</p>
+      $$\left(1+\frac12+\frac14\right)\log_2 x = 7 \;\Rightarrow\; \frac74\log_2 x = 7 \;\Rightarrow\; \log_2 x = 4.$$
+      <p>Logo $x = 2^4 = 16$.</p>
+      <p><strong>Teste:</strong> $\log_2 16 + \log_4 16 + \log_{16}16 = 4+2+1 = 7$ ✓.</p>
+      <p><strong>Gabarito: C</strong></p>`
+  },
+  {
+    id: 3, banca: 'ITA', ano: 2022, materia: 'Matemática', assunto: 'Polinômios e Relações de Girard',
+    enunciado: String.raw`<p>Sejam $a$, $b$ e $c$ as raízes da equação</p>
+      $$x^3 - 3x + 1 = 0.$$
+      <p>O valor de $a^4 + b^4 + c^4$ é:</p>`,
+    alternativas: {
+      A: String.raw`$6$`,
+      B: String.raw`$9$`,
+      C: String.raw`$12$`,
+      D: String.raw`$15$`,
+      E: String.raw`$18$`
+    },
+    gabarito: 'E',
+    resolucao: String.raw`<p><strong>Relações de Girard</strong> para $x^3+0\cdot x^2-3x+1=0$:</p>
+      $$a+b+c=0,\qquad ab+ac+bc=-3,\qquad abc=-1.$$
+      <p><strong>Soma dos quadrados:</strong></p>
+      $$a^2+b^2+c^2=(a+b+c)^2-2(ab+ac+bc)=0-2(-3)=6.$$
+      <p><strong>Redução de grau:</strong> cada raiz satisfaz $x^3=3x-1$. Multiplicando por $x$:</p>
+      $$x^4 = 3x^2 - x.$$
+      <p>Somando para $x=a,b,c$:</p>
+      $$a^4+b^4+c^4 = 3(a^2+b^2+c^2) - (a+b+c) = 3\cdot 6 - 0 = 18.$$
+      <p><strong>Gabarito: E</strong></p>`
+  },
+  {
+    id: 4, banca: 'AFA', ano: 2023, materia: 'Física', assunto: 'Lançamento Oblíquo',
+    enunciado: String.raw`<p>Um projétil é lançado do solo com velocidade inicial $v_0 = 20\ \text{m/s}$, formando um ângulo de $30^\circ$ com a horizontal. Desprezando a resistência do ar e adotando $g = 10\ \text{m/s}^2$, a altura máxima atingida e o alcance horizontal são, respectivamente:</p>`,
+    alternativas: {
+      A: String.raw`$5\ \text{m}$ e $10\sqrt{3}\ \text{m}$`,
+      B: String.raw`$10\ \text{m}$ e $20\sqrt{3}\ \text{m}$`,
+      C: String.raw`$5\ \text{m}$ e $20\sqrt{3}\ \text{m}$`,
+      D: String.raw`$10\ \text{m}$ e $10\sqrt{3}\ \text{m}$`,
+      E: String.raw`$20\ \text{m}$ e $40\sqrt{3}\ \text{m}$`
+    },
+    gabarito: 'C',
+    resolucao: String.raw`<p><strong>Decomposição da velocidade inicial:</strong></p>
+      $$v_{0x}=v_0\cos30^\circ = 10\sqrt3\ \text{m/s},\qquad v_{0y}=v_0\sin30^\circ = 10\ \text{m/s}.$$
+      <p><strong>Altura máxima</strong> (Torricelli na vertical, $v_y=0$ no topo):</p>
+      $$H=\frac{v_{0y}^2}{2g}=\frac{10^2}{2\cdot 10}=5\ \text{m}.$$
+      <p><strong>Tempo de voo</strong> (subida + descida):</p>
+      $$t_v=\frac{2v_{0y}}{g}=\frac{2\cdot10}{10}=2\ \text{s}.$$
+      <p><strong>Alcance:</strong></p>
+      $$A=v_{0x}\,t_v = 10\sqrt3\cdot 2 = 20\sqrt3\ \text{m}.$$
+      <p><strong>Gabarito: C</strong></p>`
+  },
+  {
+    id: 5, banca: 'EFOMM', ano: 2022, materia: 'Física', assunto: 'Colisões e Conservação de Momento',
+    enunciado: String.raw`<p>Um bloco $A$, de massa $2{,}0\ \text{kg}$, desliza com velocidade de $6{,}0\ \text{m/s}$ sobre uma superfície horizontal sem atrito e colide frontalmente com um bloco $B$, de massa $4{,}0\ \text{kg}$, inicialmente em repouso. Após o choque, os blocos permanecem unidos. A energia mecânica dissipada na colisão vale:</p>`,
+    alternativas: {
+      A: String.raw`$12\ \text{J}$`,
+      B: String.raw`$18\ \text{J}$`,
+      C: String.raw`$24\ \text{J}$`,
+      D: String.raw`$30\ \text{J}$`,
+      E: String.raw`$36\ \text{J}$`
+    },
+    gabarito: 'C',
+    resolucao: String.raw`<p><strong>Conservação da quantidade de movimento</strong> (sistema isolado na horizontal):</p>
+      $$m_A v_A = (m_A+m_B)\,v' \;\Rightarrow\; 2\cdot 6=6\,v' \;\Rightarrow\; v'=2\ \text{m/s}.$$
+      <p><strong>Energias cinéticas:</strong></p>
+      $$E_i=\tfrac12 m_A v_A^2=\tfrac12\cdot2\cdot6^2=36\ \text{J},\qquad E_f=\tfrac12 (m_A+m_B)\,v'^2=\tfrac12\cdot6\cdot2^2=12\ \text{J}.$$
+      <p><strong>Energia dissipada:</strong></p>
+      $$\Delta E = E_i - E_f = 36-12 = 24\ \text{J}$$
+      <p>(isto é, $\tfrac23$ da energia inicial — resultado típico de colisão perfeitamente inelástica com $m_B=2m_A$).</p>
+      <p><strong>Gabarito: C</strong></p>`
+  },
+  {
+    id: 6, banca: 'EN', ano: 2024, materia: 'Matemática', assunto: 'Limites e Derivadas',
+    enunciado: String.raw`<p>O valor do limite</p>
+      $$L = \lim_{x \to 0} \frac{\sin(4x) - 4x}{x^3}$$
+      <p>é igual a:</p>`,
+    alternativas: {
+      A: String.raw`$-\dfrac{32}{3}$`,
+      B: String.raw`$-\dfrac{16}{3}$`,
+      C: String.raw`$-\dfrac{8}{3}$`,
+      D: String.raw`$\dfrac{16}{3}$`,
+      E: String.raw`$\dfrac{32}{3}$`
+    },
+    gabarito: 'A',
+    resolucao: String.raw`<p>Aplicando a regra de L'Hôpital sucessivamente (indeterminação $\frac{0}{0}$):</p>
+      $$L = \lim_{x \to 0} \frac{4\cos(4x) - 4}{3x^2} = \lim_{x \to 0} \frac{-16\sin(4x)}{6x} = \lim_{x \to 0} \frac{-64\cos(4x)}{6} = -\frac{32}{3}.$$
+      <p><strong>Gabarito: A</strong></p>`
+  },
+  {
+    id: 7, banca: 'ENEM', ano: 2024, materia: 'Matemática', assunto: 'Probabilidade',
+    enunciado: String.raw`<p>Em uma urna há $6$ bolas brancas e $4$ bolas pretas, idênticas em tamanho e massa. Retirando-se duas bolas sucessivamente e sem reposição, a probabilidade de que ambas sejam da mesma cor é:</p>`,
+    alternativas: {
+      A: String.raw`$\dfrac{2}{15}$`,
+      B: String.raw`$\dfrac{1}{3}$`,
+      C: String.raw`$\dfrac{7}{15}$`,
+      D: String.raw`$\dfrac{8}{15}$`,
+      E: String.raw`$\dfrac{13}{25}$`
+    },
+    gabarito: 'C',
+    resolucao: String.raw`<p>Há dois casos favoráveis mutuamente exclusivos:</p>
+      <p><strong>1) Duas bolas brancas:</strong> $\dfrac{6}{10} \cdot \dfrac{5}{9} = \dfrac{30}{90} = \dfrac{1}{3}$.</p>
+      <p><strong>2) Duas bolas pretas:</strong> $\dfrac{4}{10} \cdot \dfrac{3}{9} = \dfrac{12}{90} = \dfrac{2}{15}$.</p>
+      <p>Somando as probabilidades: $\dfrac{1}{3} + \dfrac{2}{15} = \dfrac{5+2}{15} = \dfrac{7}{15}$.</p>
+      <p><strong>Gabarito: C</strong></p>`
+  },
+  {
+    id: 8, banca: 'FUVEST', ano: 2023, materia: 'Física', assunto: 'Eletrodinâmica',
+    enunciado: String.raw`<p>Dois resistores ôhmicos, de resistências $R_1 = 6\ \Omega$ e $R_2 = 12\ \Omega$, são associados em paralelo e ligados a uma fonte ideal de tensão $U = 24\ \text{V}$. A potência elétrica total dissipada na associação é:</p>`,
+    alternativas: {
+      A: String.raw`$32\ \text{W}$`,
+      B: String.raw`$48\ \text{W}$`,
+      C: String.raw`$96\ \text{W}$`,
+      D: String.raw`$144\ \text{W}$`,
+      E: String.raw`$288\ \text{W}$`
+    },
+    gabarito: 'D',
+    resolucao: String.raw`<p><strong>Resistência equivalente em paralelo:</strong></p>
+      $$R_{eq} = \frac{R_1 \cdot R_2}{R_1 + R_2} = \frac{6 \cdot 12}{6 + 12} = \frac{72}{18} = 4\ \Omega.$$
+      <p><strong>Potência total:</strong></p>
+      $$P = \frac{U^2}{R_{eq}} = \frac{24^2}{4} = \frac{576}{4} = 144\ \text{W}.$$
+      <p><strong>Gabarito: D</strong></p>`
+  },
+  {
+    id: 9, banca: 'UERJ', ano: 2025, materia: 'Química', assunto: 'Soluções e Concentração',
+    enunciado: String.raw`<p>Para preparar $500\ \text{mL}$ de uma solução aquosa de hidróxido de sódio ($\ce{NaOH}$, massa molar $40\ \text{g/mol}$) com concentração igual a $0{,}2\ \text{mol/L}$, a massa de soluto necessária, em gramas, é:</p>`,
+    alternativas: {
+      A: String.raw`$2{,}0$`,
+      B: String.raw`$4{,}0$`,
+      C: String.raw`$8{,}0$`,
+      D: String.raw`$10{,}0$`,
+      E: String.raw`$20{,}0$`
+    },
+    gabarito: 'B',
+    resolucao: String.raw`<p>Número de mols de $\ce{NaOH}$ necessário em $V = 0{,}5\ \text{L}$:</p>
+      $$n = \mathcal{M} \cdot V = 0{,}2\ \text{mol/L} \cdot 0{,}5\ \text{L} = 0{,}1\ \text{mol}.$$
+      <p>Convertendo para massa: $m = n \cdot M = 0{,}1 \cdot 40 = 4{,}0\ \text{g}$.</p>
+      <p><strong>Gabarito: B</strong></p>`
+  },
+  {
+    id: 10, banca: 'PUC-RJ', ano: 2024, materia: 'Matemática', assunto: 'Progressão Geométrica',
+    enunciado: String.raw`<p>A soma dos infinitos termos da progressão geométrica</p>
+      $$\left(3,\; 1,\; \frac{1}{3},\; \frac{1}{9},\; \dots\right)$$
+      <p>é igual a:</p>`,
+    alternativas: {
+      A: String.raw`$\dfrac{7}{2}$`,
+      B: String.raw`$4$`,
+      C: String.raw`$\dfrac{9}{2}$`,
+      D: String.raw`$5$`,
+      E: String.raw`$6$`
+    },
+    gabarito: 'C',
+    resolucao: String.raw`<p>Temos o primeiro termo $a_1 = 3$ e a razão $q = \dfrac{1}{3}$ (com $|q| < 1$).</p>
+      <p>Pela fórmula da soma da PG infinita:</p>
+      $$S_\infty = \frac{a_1}{1 - q} = \frac{3}{1 - \frac{1}{3}} = \frac{3}{\frac{2}{3}} = \frac{9}{2}.$$
+      <p><strong>Gabarito: C</strong></p>`
+  }
+];
+
+/* =====================================================================
+   CONFIGURAÇÕES GERAIS
+   ===================================================================== */
+const CONCURSOS = ['Todos', 'ITA', 'IME', 'EN', 'EFOMM', 'AFA', 'EsPCEx', 'ENEM', 'FUVEST', 'UERJ', 'PUC-RJ'];
+const MATERIAS  = ['Todas', 'Matemática', 'Física', 'Química', 'Português', 'Inglês'];
+const STATUS    = [{ k: 'todas', l: 'Todas' }, { k: 'nao', l: 'Não resolvidas' }, { k: 'erradas', l: 'Erradas' }];
+const LETTERS   = ['A', 'B', 'C', 'D', 'E'];
+
+const RANKS = [
+  { name: 'Aluno',     min: 0 },
+  { name: 'Cadete',    min: 100 },
+  { name: 'Aspirante', min: 250 },
+  { name: 'Tenente',   min: 500 },
+  { name: 'Capitão',   min: 900 },
+  { name: 'Major',     min: 1400 },
+  { name: 'Coronel',   min: 2000 },
+  { name: 'General',   min: 3000 }
+];
+
+const BANCA_STYLE = {
+  ITA:      'bg-rose-500/10 text-rose-600 dark:text-rose-300 border-rose-500/30',
+  IME:      'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/30',
+  EN:       'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+  EFOMM:    'bg-sky-500/10 text-sky-600 dark:text-sky-300 border-sky-500/30',
+  AFA:      'bg-violet-500/10 text-violet-600 dark:text-violet-300 border-violet-500/30',
+  EsPCEx:   'bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/30',
+  ENEM:     'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/30',
+  FUVEST:   'bg-teal-500/10 text-teal-600 dark:text-teal-300 border-teal-500/30',
+  UERJ:     'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/30',
+  'PUC-RJ': 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300 border-fuchsia-500/30'
+};
+
+const BOTS = [
+  { id: 'bot:ana',  name: 'Ana Beatriz',   handle: 'anab',     code: '#AFA210', streak: 12,
+    subjects: { 'Matemática': { hit: 30, err: 6 }, 'Física': { hit: 14, err: 8 } },
+    act: [['Acertou uma questão de Física — Lançamento Oblíquo (AFA)', 45], ['Acertou uma questão de Matemática — Logaritmos (EFOMM)', 130], ['Errou uma questão de Física — Colisões (EFOMM)', 1500]] },
+  { id: 'bot:cadu', name: 'Carlos Eduardo', handle: 'cadu_ime', code: '#IME777', streak: 4,
+    subjects: { 'Matemática': { hit: 60, err: 12 }, 'Física': { hit: 38, err: 20 } },
+    act: [['Acertou uma questão de Matemática — Polinômios (ITA)', 20], ['Acertou uma questão de Matemática — Números Complexos (AFA)', 90], ['Errou uma questão de Física — Lançamento Oblíquo (AFA)', 2900]] },
+  { id: 'bot:mari', name: 'Marina Duarte', handle: 'mari_efomm', code: '#EFM303', streak: 21,
+    subjects: { 'Matemática': { hit: 8, err: 7 }, 'Física': { hit: 12, err: 4 } },
+    act: [['Acertou uma questão de Física — Colisões (EFOMM)', 8], ['Acertou uma questão de Física — Lançamento Oblíquo (AFA)', 60], ['Errou uma questão de Matemática — Logaritmos (EFOMM)', 400]] },
+  { id: 'bot:rafa', name: 'Rafael Lima',   handle: 'rafa_ita', code: '#ITA999', streak: 33,
+    subjects: { 'Matemática': { hit: 90, err: 15 }, 'Física': { hit: 60, err: 25 } },
+    act: [['Acertou uma questão de Matemática — Polinômios (ITA)', 15], ['Acertou uma questão de Física — Colisões (EFOMM)', 70], ['Acertou uma questão de Matemática — Logaritmos (EFOMM)', 200]] }
+];
+const DEMO_DEFAULT_FRIENDS = ['bot:ana', 'bot:cadu', 'bot:mari'];
+
+/* =====================================================================
+   UTILITÁRIOS
+   ===================================================================== */
+const $  = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const stripHtml = s => String(s ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayStr = () => ymd(new Date());
+const yesterdayStr = () => { const d = new Date(); d.setDate(d.getDate() - 1); return ymd(d); };
+
+const EMAIL_RE  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
+const cleanHandle = h => (h || '').trim().replace(/^@/, '').toLowerCase();
+
+function ago(ts) {
+  const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (m < 1) return 'agora';
+  if (m < 60) return `há ${m} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `há ${h} h`;
+  return `há ${Math.round(h / 24)} d`;
+}
+
+const AV = ['bg-indigo-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500', 'bg-sky-500', 'bg-violet-500', 'bg-teal-500', 'bg-pink-500'];
+function avatar(name, size = 'h-10 w-10 text-base') {
+  const s = String(name || '?'); let h = 0;
+  for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `<span class="${size} shrink-0 rounded-full grid place-items-center font-bold text-white ${AV[h % AV.length]}">${esc(s.trim().charAt(0).toUpperCase() || '?')}</span>`;
+}
+
+function suggestHandle(name, taken) {
+  let base = (name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 14);
+  if (base.length < 3) base = (base + 'aluno').slice(0, 8);
+  let h = base;
+  while (taken(h) || !HANDLE_RE.test(h)) h = base + Math.floor(Math.random() * 900 + 100);
+  return h;
+}
+function makeCode(seed, taken) {
+  const letters = (seed || '').toUpperCase().replace(/[^A-Z]/g, '').padEnd(3, 'X').slice(0, 3);
+  let c;
+  do { c = '#' + letters + (Math.floor(Math.random() * 900) + 100); } while (taken(c));
+  return c;
+}
+
+/* =====================================================================
+   PERSISTÊNCIA (localStorage) — dados separados por dono + banco de questões
+   ===================================================================== */
+const SESSION_KEY   = 'radiano:v2:session';
+const USERS_KEY     = 'radiano:v2:users';
+const DATA_PREFIX   = 'radiano:v2:data:';
+const THEME_KEY     = 'radiano:theme';
+const CUSTOM_Q_KEY  = 'radiano:v2:custom_questions';
+const DELETED_Q_KEY = 'radiano:v2:deleted_question_ids';
+
+const mem = {};
+const lsGet = (k, d = null) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return k in mem ? mem[k] : d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { mem[k] = v; return false; } };
+const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} delete mem[k]; };
+
+let QUESTIONS = BASE_QUESTIONS.slice();
+let customQuestions = [];
+let deletedQuestionIds = new Set();
+
+function normalizeHtmlBlock(txt) {
+  const s = String(txt || '').trim();
+  if (!s) return '';
+  if (/^\s*<(p|div|ul|ol|blockquote|pre|h[1-6])\b/i.test(s)) return s;
+  return s.split(/\n\s*\n/).map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`).join('');
+}
+
+function nextQuestionId() {
+  const maxId = QUESTIONS.reduce((m, q) => Math.max(m, Number(q.id) || 0), 0);
+  return maxId + 1;
+}
+
+function sanitizeQuestion(raw, fallbackId, inheritedMeta = {}) {
+  if (!raw || typeof raw !== 'object') return { error: 'Objeto de questão inválido.' };
+
+  const meta = (raw.prova && typeof raw.prova === 'object') ? raw.prova : {};
+  const banca = String(
+    raw.banca ?? raw.concurso ?? raw.orgao ?? raw.órgão ??
+    meta.banca ?? meta.concurso ?? meta.orgao ?? meta.órgão ??
+    inheritedMeta.banca ?? ''
+  ).trim();
+
+  const anoRaw = raw.ano ?? meta.ano ?? inheritedMeta.ano ?? new Date().getFullYear();
+  const ano = Number(anoRaw) || new Date().getFullYear();
+
+  const materia = String(
+    raw.materia ?? raw.matéria ?? raw.disciplina ??
+    meta.materia ?? meta.matéria ?? meta.disciplina ??
+    inheritedMeta.materia ?? ''
+  ).trim();
+
+  const fase = String(raw.fase ?? meta.fase ?? inheritedMeta.fase ?? '').trim();
+  const assuntoBase = String(raw.assunto ?? raw.topico ?? raw.tópico ?? 'Geral').trim() || 'Geral';
+  const assunto = fase && !assuntoBase.toLowerCase().includes(fase.toLowerCase())
+    ? `${assuntoBase} (${fase})`
+    : assuntoBase;
+
+  const rawEnun = raw.enunciado ?? raw.pergunta ?? raw.texto ?? '';
+  const enunciado = normalizeHtmlBlock(rawEnun);
+  const imagem = typeof raw.imagem === 'string' ? raw.imagem.trim() : '';
+  const imagemPos = raw.imagemPos === 'resolucao' ? 'resolucao' : 'enunciado';
+
+  const alts = {};
+  const srcAlts = raw.alternativas ?? raw.opcoes ?? raw.opções ?? {};
+  if (Array.isArray(srcAlts)) {
+    srcAlts.forEach((val, idx) => {
+      const l = LETTERS[idx];
+      if (l && val !== undefined && String(val).trim() !== '') {
+        alts[l] = String(val).trim();
+      }
+    });
+  } else if (srcAlts && typeof srcAlts === 'object') {
+    for (const l of LETTERS) {
+      const val = srcAlts[l] ?? srcAlts[l.toLowerCase()] ?? raw['alt_' + l.toLowerCase()] ?? raw[l];
+      if (val !== undefined && String(val).trim() !== '') alts[l] = String(val).trim();
+    }
+  } else {
+    for (const l of LETTERS) {
+      const val = raw['alt_' + l.toLowerCase()] ?? raw[l];
+      if (val !== undefined && String(val).trim() !== '') alts[l] = String(val).trim();
+    }
+  }
+
+  let gabarito = String(
+    raw.gabarito ?? raw.resposta ?? raw.correta ?? raw.alternativa_correta ?? ''
+  ).trim().toUpperCase();
+  const gLetterMatch = gabarito.match(/\b([A-E])\b/);
+  if (gLetterMatch) gabarito = gLetterMatch[1];
+
+  const rawResolucao = raw.resolucao ?? raw.resolução ?? raw.comentario ?? raw.comentário ?? raw.explicacao ?? raw.explicação ?? '<p>Resolução não informada.</p>';
+  const resolucao = normalizeHtmlBlock(rawResolucao);
+
+  if (!banca) return { error: 'Faltou informar a BANCA.' };
+  if (!materia) return { error: 'Faltou informar a MATÉRIA.' };
+  if (!String(rawEnun || '').trim() && !imagem) return { error: 'Informe o ENUNCIADO ou uma imagem.' };
+  if (Object.keys(alts).length < 2) return { error: 'Informe ao menos 2 alternativas (A–E).' };
+  if (!LETTERS.includes(gabarito) || !alts[gabarito]) return { error: `Gabarito "${gabarito || '?'}" inválido ou sem alternativa correspondente.` };
+
+  const rawId = raw.id ?? raw.numero ?? raw.número;
+  const id = (rawId !== undefined && rawId !== null && String(rawId).trim() !== '') ? rawId : fallbackId;
+
+  return {
+    question: { id, banca, ano, materia, assunto, enunciado, imagem, imagemPos, alternativas: alts, gabarito, resolucao, custom: true }
+  };
+}
+
+function rebuildQuestionsBank() {
+  const saved = lsGet(CUSTOM_Q_KEY, []);
+  const deletedArr = lsGet(DELETED_Q_KEY, []);
+  deletedQuestionIds = new Set(Array.isArray(deletedArr) ? deletedArr.map(String) : []);
+
+  customQuestions = [];
+  const map = new Map();
+
+  BASE_QUESTIONS.forEach(q => {
+    if (!deletedQuestionIds.has(String(q.id))) {
+      map.set(String(q.id), { ...q, custom: false });
+    }
+  });
+
+  if (Array.isArray(saved)) {
+    let nextId = BASE_QUESTIONS.reduce((m, q) => Math.max(m, Number(q.id) || 0), 0) + 1;
+    saved.forEach(item => {
+      const check = sanitizeQuestion(item, nextId);
+      if (check.question) {
+        if (map.has(String(check.question.id))) check.question.id = nextId;
+        nextId = Math.max(nextId + 1, (Number(check.question.id) || 0) + 1);
+        const qObj = { ...check.question, custom: true };
+        if (!deletedQuestionIds.has(String(qObj.id))) {
+          customQuestions.push(qObj);
+          map.set(String(qObj.id), qObj);
+        }
+      }
+    });
+  }
+  QUESTIONS = Array.from(map.values());
+}
+
+function addQuestionsToBank(newList) {
+  if (!Array.isArray(newList) || !newList.length) return 0;
+  let nextId = nextQuestionId();
+  const existingIds = new Set([
+    ...QUESTIONS.map(q => String(q.id)),
+    ...customQuestions.map(q => String(q.id)),
+    ...BASE_QUESTIONS.map(q => String(q.id))
+  ]);
+  const added = [];
+
+  newList.forEach(q => {
+    const item = { ...q, custom: true };
+    if (!item.id || existingIds.has(String(item.id))) {
+      while (existingIds.has(String(nextId))) nextId++;
+      item.id = nextId++;
+    }
+    const idStr = String(item.id);
+    if (deletedQuestionIds.has(idStr)) {
+      deletedQuestionIds.delete(idStr);
+      lsSet(DELETED_Q_KEY, Array.from(deletedQuestionIds));
+    }
+    existingIds.add(idStr);
+    customQuestions.push(item);
+    added.push(item);
+  });
+
+  const persisted = lsSet(CUSTOM_Q_KEY, customQuestions);
+  if (!persisted) {
+    toast('Aviso: armazenamento cheio! Exporte o JSON para não perder questões.', 'bad');
+  }
+  rebuildQuestionsBank();
+  return added.length;
+}
+
+async function deleteQuestionById(qid) {
+  const q = getQ(qid);
+  if (!q) return;
+  const label = `${q.banca} ${q.ano} — ${q.materia} (${q.assunto})`;
+  if (!(await askConfirm(`Excluir esta questão permanentemente?\n\n${label}`, 'Excluir'))) return;
+
+  const idStr = String(q.id);
+  const prevCustomLen = customQuestions.length;
+  customQuestions = customQuestions.filter(item => String(item.id) !== idStr);
+
+  if (customQuestions.length !== prevCustomLen) {
+    lsSet(CUSTOM_Q_KEY, customQuestions);
+  }
+  if (BASE_QUESTIONS.some(bq => String(bq.id) === idStr)) {
+    deletedQuestionIds.add(idStr);
+    lsSet(DELETED_Q_KEY, Array.from(deletedQuestionIds));
+  }
+
+  delete db.progress[q.id];
+  delete state.struck[q.id];
+  delete state.retry[q.id];
+  saveDB();
+
+  rebuildQuestionsBank();
+  applyFilters();
+  updateHeader();
+  render();
+  renderAddQuestions();
+  toast('🗑️ Questão excluída do banco', 'bad');
+}
+
+const freshData = () => ({ xp: 0, streak: { count: 0, last: null, best: 0 }, progress: {}, log: [], friends: DEMO_DEFAULT_FRIENDS.slice() });
+function normData(d) {
+  const b = freshData();
+  if (!d || typeof d !== 'object') return b;
+  return {
+    ...b, ...d,
+    streak: { ...b.streak, ...(d.streak || {}) },
+    progress: d.progress || {},
+    log: Array.isArray(d.log) ? d.log : [],
+    friends: Array.isArray(d.friends) ? d.friends : b.friends
+  };
+}
+const loadData = id => normData(lsGet(DATA_PREFIX + id));
+
+let account = null;
+let db = freshData();
+let migratedFromGuest = false;
+const ownerId = () => (account ? account.id : 'guest');
+
+function bootstrapData(id) {
+  const existing = lsGet(DATA_PREFIX + id);
+  if (existing) return normData(existing);
+  const d = freshData();
+  if (id !== 'guest') {
+    const g = loadData('guest');
+    if (g.xp > 0 || Object.keys(g.progress).length) {
+      d.xp = g.xp; d.streak = g.streak; d.progress = g.progress; d.log = g.log;
+      lsSet(DATA_PREFIX + 'guest', freshData());
+      migratedFromGuest = true;
+    }
+  }
+  lsSet(DATA_PREFIX + id, d);
+  return d;
+}
+function saveDB() { lsSet(DATA_PREFIX + ownerId(), db); scheduleCloudPush(); }
+
+/* ---------- domínio: ofensiva, patente, estatísticas ---------- */
+function streakValid(count, last) { return (last === todayStr() || last === yesterdayStr()) ? (count || 0) : 0; }
+const currentStreak = () => streakValid(db.streak.count, db.streak.last);
+
+function registerHitToday() {
+  const s = db.streak, t = todayStr();
+  if (s.last === t) return false;
+  s.count = (s.last === yesterdayStr()) ? s.count + 1 : 1;
+  s.last = t;
+  s.best = Math.max(s.best || 0, s.count);
+  return true;
+}
+
+function rankInfo(xp) {
+  let idx = 0;
+  RANKS.forEach((r, i) => { if (xp >= r.min) idx = i; });
+  const cur = RANKS[idx], next = RANKS[idx + 1] || null;
+  const pct = next ? Math.min(100, ((xp - cur.min) / (next.min - cur.min)) * 100) : 100;
+  return { cur, next, pct };
+}
+
+const getQ = id => QUESTIONS.find(q => String(q.id) === String(id));
+
+function statsFrom(progress) {
+  const subjects = {}; let solved = 0, hits = 0;
+  Object.entries(progress || {}).forEach(([id, p]) => {
+    const q = getQ(id); if (!q) return;
+    const s = subjects[q.materia] = subjects[q.materia] || { hit: 0, err: 0 };
+    p.correct ? s.hit++ : s.err++;
+    solved++; if (p.correct) hits++;
+  });
+  return { subjects, solved, hits };
+}
+function activityFromLog(log) {
+  return (log || []).slice(-8).reverse().map(e => {
+    const q = getQ(e.qid); if (!q) return null;
+    return { text: `${e.correct ? 'Acertou' : 'Errou'} uma questão de ${q.materia} — ${q.assunto} (${q.banca})`, at: e.at, ok: !!e.correct };
+  }).filter(Boolean);
+}
+const pctOf = p => (p.solved ? Math.round((p.hits / p.solved) * 100) : 0);
+
+/* ---------- perfis normalizados ---------- */
+function profileFromBot(b) {
+  const hit = Object.values(b.subjects).reduce((a, v) => a + v.hit, 0);
+  const err = Object.values(b.subjects).reduce((a, v) => a + v.err, 0);
+  return {
+    id: b.id, name: b.name, handle: b.handle, code: b.code, sample: true,
+    xp: hit * 10 + err * 2, streak: b.streak, solved: hit + err, hits: hit, subjects: b.subjects,
+    activity: b.act.map(([text, min]) => ({ text, at: Date.now() - min * 60000, ok: text.startsWith('Acertou') }))
+  };
+}
+function profileFromData(id, name, handle, code, data) {
+  const st = statsFrom(data.progress);
+  return { id, name, handle, code, xp: data.xp, streak: streakValid(data.streak.count, data.streak.last),
+           solved: st.solved, hits: st.hits, subjects: st.subjects, activity: activityFromLog(data.log) };
+}
+function meProfile() {
+  const st = statsFrom(db.progress);
+  return {
+    id: ownerId(), isMe: true,
+    name: account ? account.name : 'Visitante', handle: account ? account.handle : 'visitante', code: account ? account.code : '',
+    xp: db.xp, streak: currentStreak(), solved: st.solved, hits: st.hits, subjects: st.subjects, activity: activityFromLog(db.log)
+  };
+}
+function profileFromRow(r) {
+  return {
+    id: r.id, name: r.display_name, handle: r.handle, code: r.code, xp: r.xp || 0,
+    streak: streakValid(r.streak, r.streak_last), solved: r.solved || 0, hits: r.hits || 0,
+    subjects: r.subjects || {}, activity: activityFromLog(r.activity || [])
+  };
+}
+
+/* =====================================================================
+   CAMADA DE AUTENTICAÇÃO
+   ===================================================================== */
+async function hashPw(pw, salt) {
+  try {
+    if (window.crypto && crypto.subtle) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(salt + ':' + pw));
+      return 'sha256:' + [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+  } catch (e) {}
+  return 'b64:' + btoa(unescape(encodeURIComponent(salt + ':' + pw)));
+}
+
+function validateSignup({ email, password, name }) {
+  if (!EMAIL_RE.test(email)) throw new Error('Informe um e-mail válido.');
+  if ((password || '').length < 6) throw new Error('A senha precisa ter pelo menos 6 caracteres.');
+  if (name.length < 2 || name.length > 30) throw new Error('O nome de exibição deve ter entre 2 e 30 caracteres.');
+}
+function validateHandle(h) {
+  if (!HANDLE_RE.test(h)) throw new Error('O @usuario deve ter 3–20 caracteres: letras minúsculas, números ou _.');
+}
+
+const AuthDemo = {
+  mode: 'demo',
+  _users() { return lsGet(USERS_KEY, {}); },
+  _save(u) { lsSet(USERS_KEY, u); },
+  _acc(u) { return { id: u.id, email: u.email, name: u.name, handle: u.handle, code: u.code, mode: 'demo' }; },
+  _handleTaken(h, exceptId) { return BOTS.some(b => b.handle === h) || Object.values(this._users()).some(u => u.handle === h && u.id !== exceptId); },
+  _codeTaken(c) { return BOTS.some(b => b.code === c) || Object.values(this._users()).some(u => u.code === c); },
+
+  async signUp({ email, password, name, handle }) {
+    email = (email || '').trim().toLowerCase(); name = (name || '').trim(); handle = cleanHandle(handle);
+    validateSignup({ email, password, name });
+    const users = this._users();
+    if (Object.values(users).some(u => u.email === email)) throw new Error('Este e-mail já está cadastrado. Tente entrar.');
+    if (!handle) handle = suggestHandle(name, h => this._handleTaken(h));
+    else { validateHandle(handle); if (this._handleTaken(handle)) throw new Error('Este @usuario já está em uso.'); }
+    const id = 'u_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    const u = { id, email, name, handle, code: makeCode(handle, c => this._codeTaken(c)), hash: await hashPw(password, email), createdAt: Date.now() };
+    users[id] = u; this._save(users); lsSet(SESSION_KEY, { id });
+    return { account: this._acc(u) };
+  },
+  async signIn({ email, password }) {
+    email = (email || '').trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) throw new Error('Informe um e-mail válido.');
+    const u = Object.values(this._users()).find(x => x.email === email);
+    if (!u || u.hash !== await hashPw(password || '', email)) throw new Error('E-mail ou senha incorretos.');
+    lsSet(SESSION_KEY, { id: u.id });
+    return { account: this._acc(u) };
+  },
+  async signOut() { lsDel(SESSION_KEY); },
+  async restore() {
+    const s = lsGet(SESSION_KEY); if (!s) return null;
+    const u = this._users()[s.id];
+    return u ? this._acc(u) : null;
+  },
+  async updateProfile(acc, { name, handle }) {
+    name = (name || '').trim(); handle = cleanHandle(handle);
+    if (name.length < 2 || name.length > 30) throw new Error('O nome de exibição deve ter entre 2 e 30 caracteres.');
+    validateHandle(handle);
+    if (this._handleTaken(handle, acc.id)) throw new Error('Este @usuario já está em uso.');
+    const users = this._users(); const u = users[acc.id];
+    u.name = name; u.handle = handle; this._save(users);
+    return this._acc(u);
+  },
+  async regenCode(acc) {
+    const users = this._users(); const u = users[acc.id];
+    u.code = makeCode(u.handle, c => this._codeTaken(c)); this._save(users);
+    return this._acc(u);
+  }
+};
+
+function sbErr(e) {
+  const m = (e && e.message) || 'Erro inesperado.';
+  if (/invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.';
+  if (/already registered|already been registered/i.test(m)) return 'Este e-mail já está cadastrado.';
+  if (/email not confirmed/i.test(m)) return 'Confirme seu e-mail antes de entrar (veja sua caixa de entrada).';
+  if (/password/i.test(m) && /characters|weak|short/i.test(m)) return 'Senha muito curta ou fraca.';
+  return m;
+}
+async function ensureProfileSb(user) {
+  const { data: row } = await sbClient.from('profiles').select('id,handle,code,display_name').eq('id', user.id).maybeSingle();
+  const toAcc = r => ({ id: user.id, email: user.email, name: r.display_name, handle: r.handle, code: r.code, mode: 'supabase' });
+  if (row) return toAcc(row);
+  const meta = user.user_metadata || {};
+  const name = String(meta.display_name || (user.email || 'aluno').split('@')[0]).slice(0, 30);
+  let handle = cleanHandle(meta.handle);
+  if (!HANDLE_RE.test(handle)) handle = suggestHandle(name, () => false);
+  for (let i = 0; i < 4; i++) {
+    const code = makeCode(handle, () => false);
+    const { error } = await sbClient.from('profiles').insert({ id: user.id, handle, code, display_name: name });
+    if (!error) return toAcc({ display_name: name, handle, code });
+    if (error.code === '23505') { handle = handle.slice(0, 16) + Math.floor(Math.random() * 900 + 100); continue; }
+    throw new Error(sbErr(error));
+  }
+  throw new Error('Não foi possível criar o perfil. Tente novamente.');
+}
+const AuthSb = {
+  mode: 'supabase',
+  async signUp({ email, password, name, handle }) {
+    email = (email || '').trim().toLowerCase(); name = (name || '').trim(); handle = cleanHandle(handle);
+    validateSignup({ email, password, name });
+    if (handle) validateHandle(handle);
+    const { data, error } = await sbClient.auth.signUp({ email, password, options: { data: { display_name: name, handle } } });
+    if (error) throw new Error(sbErr(error));
+    if (!data.session) return { needsConfirm: true };
+    return { account: await ensureProfileSb(data.user) };
+  },
+  async signIn({ email, password }) {
+    const { data, error } = await sbClient.auth.signInWithPassword({ email: (email || '').trim().toLowerCase(), password });
+    if (error) throw new Error(sbErr(error));
+    return { account: await ensureProfileSb(data.user) };
+  },
+  async signOut() { await sbClient.auth.signOut(); },
+  async restore() {
+    const { data } = await sbClient.auth.getSession();
+    return data && data.session ? ensureProfileSb(data.session.user) : null;
+  },
+  async updateProfile(acc, { name, handle }) {
+    name = (name || '').trim(); handle = cleanHandle(handle);
+    if (name.length < 2 || name.length > 30) throw new Error('O nome de exibição deve ter entre 2 e 30 caracteres.');
+    validateHandle(handle);
+    const { error } = await sbClient.from('profiles').update({ display_name: name, handle }).eq('id', acc.id);
+    if (error) throw new Error(error.code === '23505' ? 'Este @usuario já está em uso.' : sbErr(error));
+    return { ...acc, name, handle };
+  },
+  async regenCode(acc) {
+    for (let i = 0; i < 4; i++) {
+      const code = makeCode(acc.handle, () => false);
+      const { error } = await sbClient.from('profiles').update({ code }).eq('id', acc.id);
+      if (!error) return { ...acc, code };
+      if (error.code !== '23505') throw new Error(sbErr(error));
+    }
+    throw new Error('Não foi possível gerar um novo código.');
+  }
+};
+const Auth = USE_SUPABASE ? AuthSb : AuthDemo;
+
+let cloudTimer = null;
+function scheduleCloudPush() {
+  if (!USE_SUPABASE || !account) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(cloudPush, 800);
+}
+async function cloudPush() {
+  if (!USE_SUPABASE || !account) return;
+  const st = statsFrom(db.progress);
+  try {
+    await sbClient.from('profiles').update({
+      xp: db.xp, streak: currentStreak(), streak_last: db.streak.last, best_streak: db.streak.best || 0,
+      solved: st.solved, hits: st.hits, subjects: st.subjects, activity: db.log.slice(-15),
+      state: { xp: db.xp, streak: db.streak, progress: db.progress, log: db.log }, updated_at: new Date().toISOString()
+    }).eq('id', account.id);
+  } catch (e) { console.warn('Sincronização falhou:', e); }
+}
+async function cloudPull() {
+  if (!USE_SUPABASE || !account) return;
+  try {
+    const { data } = await sbClient.from('profiles').select('xp,state').eq('id', account.id).maybeSingle();
+    if (data && data.state && (data.xp || 0) >= db.xp) {
+      db = normData({ ...data.state, friends: db.friends });
+      lsSet(DATA_PREFIX + account.id, db);
+    } else { scheduleCloudPush(); }
+  } catch (e) { console.warn('Não foi possível carregar dados da nuvem:', e); }
+}
+
+/* =====================================================================
+   CAMADA SOCIAL (amigos)
+   ===================================================================== */
+function resolveLocalProfile(id) {
+  if (id.startsWith('bot:')) { const b = BOTS.find(x => x.id === id); return b ? profileFromBot(b) : null; }
+  const u = AuthDemo._users()[id];
+  return u ? profileFromData(u.id, u.name, u.handle, u.code, loadData(u.id)) : null;
+}
+function findLocalProfile(query) {
+  const s = (query || '').trim().toLowerCase();
+  if (!s) return null;
+  const users = Object.values(AuthDemo._users());
+  if (EMAIL_RE.test(s)) {
+    const u = users.find(x => x.email === s);
+    return u ? resolveLocalProfile(u.id) : null;
+  }
+  const cands = [...BOTS.map(b => profileFromBot(b)), ...users.map(u => resolveLocalProfile(u.id))];
+  if (s.startsWith('#')) return cands.find(p => p.code.toLowerCase() === s) || null;
+  if (s.startsWith('@')) return cands.find(p => p.handle === s.slice(1)) || null;
+  return cands.find(p => p.handle === s || p.code.toLowerCase() === '#' + s) || null;
+}
+
+const SocialDemo = {
+  async list() { return db.friends.map(resolveLocalProfile).filter(Boolean); },
+  async add(query) {
+    const t = findLocalProfile(query);
+    if (!t) return { error: 'Nenhum usuário encontrado com esse código, @usuario ou e-mail.' };
+    if (t.id === ownerId()) return { error: 'Você não pode adicionar a si mesmo.' };
+    if (db.friends.includes(t.id)) return { error: 'Esse usuário já está na sua lista.' };
+    db.friends.push(t.id); saveDB();
+    return { profile: t };
+  },
+  async remove(id) { db.friends = db.friends.filter(x => x !== id); saveDB(); }
+};
+const SB_PUBLIC_COLS = 'id,handle,code,display_name,xp,streak,streak_last,solved,hits,subjects,activity';
+const SocialSb = {
+  async list() {
+    const { data: fr, error } = await sbClient.from('friendships').select('friend_id').eq('user_id', account.id);
+    if (error) throw new Error(sbErr(error));
+    const ids = (fr || []).map(r => r.friend_id);
+    if (!ids.length) return [];
+    const { data: rows, error: e2 } = await sbClient.from('profiles').select(SB_PUBLIC_COLS).in('id', ids);
+    if (e2) throw new Error(sbErr(e2));
+    return (rows || []).map(profileFromRow);
+  },
+  async add(query) {
+    const s = (query || '').trim();
+    if (EMAIL_RE.test(s)) return { error: 'No modo Supabase, adicione por @usuario ou #código (e-mails não são públicos).' };
+    const handle = s.replace(/^@/, '').toLowerCase();
+    const code = (s.startsWith('#') ? s : '#' + s).toUpperCase();
+    let row = null;
+    if (!s.startsWith('#') && HANDLE_RE.test(handle)) {
+      const r = await sbClient.from('profiles').select(SB_PUBLIC_COLS).eq('handle', handle).maybeSingle();
+      row = r.data;
+    }
+    if (!row && /^#[A-Z0-9]{4,10}$/.test(code)) {
+      const r = await sbClient.from('profiles').select(SB_PUBLIC_COLS).eq('code', code).maybeSingle();
+      row = r.data;
+    }
+    if (!row) return { error: 'Nenhum usuário encontrado com esse código ou @usuario.' };
+    if (row.id === account.id) return { error: 'Você não pode adicionar a si mesmo.' };
+    const { error } = await sbClient.from('friendships').insert({ user_id: account.id, friend_id: row.id });
+    if (error) return { error: error.code === '23505' ? 'Esse usuário já está na sua lista.' : sbErr(error) };
+    return { profile: profileFromRow(row) };
+  },
+  async remove(id) { await sbClient.from('friendships').delete().eq('user_id', account.id).eq('friend_id', id); }
+};
+const SocialNone = { async list() { return []; }, async add() { return { error: 'Entre na sua conta para adicionar amigos.' }; }, async remove() {} };
+const social = () => (USE_SUPABASE ? (account ? SocialSb : SocialNone) : SocialDemo);
+
+/* =====================================================================
+   ESTADO DA UI
+   ===================================================================== */
+const state = {
+  concurso: 'Todos', ano: 'Todos', materia: 'Todas', status: 'todas',
+  list: [], idx: 0, selected: null,
+  struck: {},
+  retry: {}
+};
+const F = { list: [], sort: 'xp', selected: null, loading: false, error: null, addError: null, query: '' };
+const P = { editing: false, error: null };
+const QBuilder = {
+  mode: 'single',
+  bulkText: '',
+  jsonText: '',
+  report: null,
+  manageFilter: 'all',
+  manageSearch: '',
+  draft: {
+    banca: 'EFOMM', ano: 2025, materia: 'Matemática', assunto: '',
+    enunciado: '', imagem: '', imagemPos: 'enunciado',
+    A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
+  }
+};
+let route = 'questoes';
+let authTab = 'signin';
+let authBusy = false;
+
+const currentQ = () => getQ(state.list[state.idx]);
+const isAnswered = q => !!db.progress[q.id] && !state.retry[q.id];
+
+function availableYears() {
+  const yrs = Array.from(new Set(QUESTIONS.map(q => String(q.ano)).filter(Boolean)));
+  yrs.sort((a, b) => Number(b) - Number(a));
+  return ['Todos', ...yrs];
+}
+
+function statusOk(q) {
+  const p = db.progress[q.id];
+  if (state.status === 'nao') return !p;
+  if (state.status === 'erradas') return !!p && !p.correct;
+  return true;
+}
+function applyFilters() {
+  const validYears = availableYears();
+  if (!validYears.includes(String(state.ano))) state.ano = 'Todos';
+
+  state.list = QUESTIONS
+    .filter(q => (state.concurso === 'Todos' || q.banca === state.concurso)
+              && (state.ano === 'Todos' || String(q.ano) === String(state.ano))
+              && (state.materia === 'Todas' || q.materia === state.materia)
+              && statusOk(q))
+    .map(q => q.id);
+  state.idx = 0;
+  state.selected = null;
+}
+
+/* =====================================================================
+   RENDERIZAÇÃO — utilidades
+   ===================================================================== */
+function typeset(el) {
+  if (!window.renderMathInElement || !el) return;
+  try {
+    renderMathInElement(el, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false }
+      ],
+      throwOnError: false, strict: false
+    });
+  } catch (e) { console.warn('KaTeX:', e); }
+}
+function icons() { if (window.lucide) lucide.createIcons(); }
+
+function toast(html, tone) {
+  const tones = { good: 'bg-emerald-600 text-white', bad: 'bg-slate-800 text-white', fire: 'bg-orange-500 text-white', level: 'bg-violet-600 text-white' };
+  const el = document.createElement('div');
+  el.className = `pointer-events-auto rounded-xl px-4 py-2.5 text-sm font-semibold shadow-xl transition-all duration-300 slide-up ${tones[tone] || tones.bad}`;
+  el.innerHTML = html;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; setTimeout(() => el.remove(), 320); }, 2800);
+}
+
+function copyText(text) {
+  const done = () => toast('Copiado: ' + esc(text), 'good');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, fallback); return; }
+  } catch (e) {}
+  fallback();
+  function fallback() {
+    try { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); done(); }
+    catch (e) { toast('Não foi possível copiar', 'bad'); }
+  }
+}
+
+/* =====================================================================
+   HEADER
+   ===================================================================== */
+function updateHeader(animate) {
+  const r = rankInfo(db.xp);
+  $('#xpValue').textContent = db.xp;
+  $('#rankName').textContent = r.cur.name;
+  $('#rankBar').style.width = r.pct + '%';
+  $('#rankInfo').textContent = r.next ? `${r.cur.name} → ${r.next.name}: faltam ${r.next.min - db.xp} XP` : 'Patente máxima alcançada!';
+
+  const st = currentStreak();
+  $('#streakValue').textContent = st;
+  const active = db.streak.last === todayStr();
+  const sc = $('#streakChip');
+  sc.classList.toggle('streak-on', active);
+  sc.classList.toggle('streak-off', !active);
+  sc.title = active ? 'Ofensiva garantida hoje!' : (st > 0 ? 'Acerte uma questão hoje para manter a ofensiva' : 'Acerte uma questão para começar sua ofensiva');
+  if (animate) { [$('#xpChip'), sc].forEach(el => { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }); }
+
+  const ac = $('#accountChip');
+  if (account) {
+    ac.title = 'Minha conta';
+    ac.innerHTML = `${avatar(account.name, 'h-7 w-7 text-sm')}
+      <div class="leading-tight text-left hidden md:block">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">${USE_SUPABASE ? 'Conta' : 'Conta demo'}</div>
+        <div class="text-sm font-bold max-w-[110px] truncate">${esc(account.name)}</div>
+      </div>`;
+  } else {
+    ac.title = 'Entrar ou criar conta';
+    ac.innerHTML = `<i data-lucide="log-in" class="h-5 w-5 text-indigo-500"></i>
+      <div class="leading-tight text-left hidden md:block">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Visitante</div>
+        <div class="text-sm font-bold">Entrar</div>
+      </div>`;
+  }
+  icons();
+}
+
+/* =====================================================================
+   VIEW: ADICIONAR & IMPORTAR QUESTÕES (COM UPLOAD DE IMAGEM E EXCLUSÃO INDIVIDUAL)
+   ===================================================================== */
+const SAMPLE_BULK = `BANCA: EFOMM | ANO: 2025 | MATERIA: Matemática | ASSUNTO: Trigonometria
+ENUNCIADO: Calcule o valor de $\\sin 15^\\circ + \\cos 75^\\circ$.
+A: $\\dfrac{\\sqrt{6}-\\sqrt{2}}{2}$
+B: $\\dfrac{\\sqrt{6}+\\sqrt{2}}{2}$
+C: $\\sqrt{6}-\\sqrt{2}$
+D: $\\dfrac{\\sqrt{2}}{2}$
+E: $1$
+GABARITO: C
+RESOLUCAO: Como $\\cos 75^\\circ = \\sin(90^\\circ - 75^\\circ) = \\sin 15^\\circ$, a soma vale $2\\sin 15^\\circ$. Usando $\\sin 15^\\circ = \\frac{\\sqrt{6}-\\sqrt{2}}{4}$, obtemos $\\frac{\\sqrt{6}-\\sqrt{2}}{2}$.
+===
+BANCA: ITA | ANO: 2024 | MATERIA: Física | ASSUNTO: Eletromagnetismo
+ENUNCIADO: Um fio reto e longo percorrido por corrente $i$ gera campo magnético de módulo $B$ a uma distância $d$. A que distância o módulo do campo passa a ser $\\dfrac{B}{4}$?
+A: $\\dfrac{d}{4}$
+B: $\\dfrac{d}{2}$
+C: $2d$
+D: $4d$
+E: $8d$
+GABARITO: D
+RESOLUCAO: Para fio longo, $B = \\frac{\\mu_0 i}{2\\pi d}$ é inversamente proporcional à distância $d$. Para reduzir $B$ por $4$, a distância deve quadruplicar: $4d$.`;
+
+const SAMPLE_JSON = `{
+  "prova": {
+    "banca": "ITA",
+    "ano": 2027,
+    "fase": "1ª fase",
+    "materia": "Matemática"
+  },
+  "questoes": [
+    {
+      "numero": 1,
+      "assunto": "Geometria Analítica",
+      "enunciado": "Considere uma elipse de excentricidade $e$.",
+      "alternativas": {
+        "A": "$\\\\dfrac{1}{2}$",
+        "B": "$\\\\dfrac{\\\\sqrt{2}}{2}$",
+        "C": "$\\\\dfrac{\\\\sqrt{3}}{2}$",
+        "D": "$\\\\dfrac{1}{3}$",
+        "E": "$\\\\dfrac{2}{3}$"
+      },
+      "gabarito": "A",
+      "resolucao": "Substituindo os dados da questão na relação de excentricidade, obtemos $\\\\dfrac{1}{2}$."
+    }
+  ]
+}`;
+
+function splitIntoQuestionBlocks(rawText) {
+  const normalized = String(rawText || '').replace(/\r\n/g, '\n').trim();
+  if (!normalized) return [];
+
+  const rawLines = normalized.split('\n');
+  const blocks = [];
+  let curLines = [];
+  let sawAltsOrGab = false;
+  let sawGabOrRes = false;
+
+  const flush = () => {
+    const txt = curLines.join('\n').trim();
+    if (txt) blocks.push(txt);
+    curLines = [];
+    sawAltsOrGab = false;
+    sawGabOrRes = false;
+  };
+
+  for (const line of rawLines) {
+    const trimmed = line.trim();
+
+    if (/^(=+|-{3,}|\*{3,}|#{3,}|\/{3,})$/.test(trimmed)) {
+      flush();
+      continue;
+    }
+
+    if (/\bBANCA\s*:/i.test(trimmed) && sawAltsOrGab && curLines.length > 0) {
+      flush();
+    }
+
+    if (/^ENUNCIADO\s*:/i.test(trimmed) && sawGabOrRes && curLines.length > 0) {
+      flush();
+    }
+
+    if (/^(A|B|C|D|E|GABARITO)\s*:/i.test(trimmed)) {
+      sawAltsOrGab = true;
+    }
+    if (/^(GABARITO|RESOLUCAO|RESOLUÇÃO)\s*:/i.test(trimmed)) {
+      sawGabOrRes = true;
+    }
+
+    curLines.push(line);
+  }
+  flush();
+
+  return blocks;
+}
+
+function parseStructuredText(rawText) {
+  const blocks = splitIntoQuestionBlocks(rawText);
+
+  const valid = [];
+  const errors = [];
+
+  blocks.forEach((blk, idx) => {
+    const lines = blk.split(/\r?\n/);
+    let metaLine = '';
+    let currentKey = null;
+    const parts = { ENUNCIADO: [], A: [], B: [], C: [], D: [], E: [], GABARITO: [], RESOLUCAO: [], IMAGEM: [] };
+
+    lines.forEach((line, lIdx) => {
+      if (lIdx === 0 && /\bBANCA\s*:/i.test(line)) {
+        metaLine = line;
+        return;
+      }
+      const m = line.match(/^(ENUNCIADO|A|B|C|D|E|GABARITO|RESOLUCAO|RESOLUÇÃO|IMAGEM)\s*:\s*(.*)$/i);
+      if (m) {
+        let key = m[1].toUpperCase();
+        if (key === 'RESOLUÇÃO') key = 'RESOLUCAO';
+        currentKey = key;
+        parts[currentKey].push(m[2]);
+      } else if (currentKey) {
+        parts[currentKey].push(line);
+      }
+    });
+
+    const bancaMatch = metaLine.match(/BANCA\s*:\s*([^|]+)/i);
+    const anoMatch = metaLine.match(/ANO\s*:\s*([^|]+)/i);
+    const matMatch = metaLine.match(/(?:MATERIA|MATÉRIA)\s*:\s*([^|]+)/i);
+    const assMatch = metaLine.match(/ASSUNTO\s*:\s*([^|]+)/i);
+
+    const gabRaw = parts.GABARITO.join(' ').trim().toUpperCase();
+    const gabMatch = gabRaw.match(/\b([A-E])\b/);
+    const gabarito = gabMatch ? gabMatch[1] : gabRaw;
+
+    const candidate = {
+      banca: bancaMatch ? bancaMatch[1].trim() : '',
+      ano: anoMatch ? anoMatch[1].trim() : new Date().getFullYear(),
+      materia: matMatch ? matMatch[1].trim() : '',
+      assunto: assMatch ? assMatch[1].trim() : 'Geral',
+      enunciado: parts.ENUNCIADO.join('\n').trim(),
+      imagem: parts.IMAGEM.join('').trim(),
+      alternativas: {
+        A: parts.A.join('\n').trim(),
+        B: parts.B.join('\n').trim(),
+        C: parts.C.join('\n').trim(),
+        D: parts.D.join('\n').trim(),
+        E: parts.E.join('\n').trim()
+      },
+      gabarito,
+      resolucao: parts.RESOLUCAO.join('\n').trim()
+    };
+
+    const res = sanitizeQuestion(candidate, nextQuestionId() + valid.length);
+    if (res.error) errors.push(`Bloco #${idx + 1}: ${res.error}`);
+    else valid.push(res.question);
+  });
+
+  return { valid, errors, totalBlocks: blocks.length };
+}
+
+function parseJsonQuestions(rawJson) {
+  let txt = String(rawJson || '').trim();
+  if (!txt) return { valid: [], errors: ['Cole um JSON ou array JSON antes de importar.'], totalBlocks: 0 };
+  let parsed;
+  try {
+    parsed = JSON.parse(txt);
+  } catch (e) {
+    try {
+      const fixed = txt.replace(/\\(?![\\"/bfnrtu])/g, '\\\\');
+      parsed = JSON.parse(fixed);
+    } catch (e2) {
+      return { valid: [], errors: ['JSON inválido: ' + e.message], totalBlocks: 0 };
+    }
+  }
+
+  let arr = [];
+  let inheritedMeta = {};
+
+  if (Array.isArray(parsed)) {
+    arr = parsed;
+  } else if (parsed && typeof parsed === 'object') {
+    const nestedList = parsed.questoes ?? parsed.questões ?? parsed.items ?? parsed.questions;
+    if (Array.isArray(nestedList)) {
+      arr = nestedList;
+      const provaObj = (parsed.prova && typeof parsed.prova === 'object') ? parsed.prova : parsed;
+      inheritedMeta = {
+        banca: provaObj.banca ?? provaObj.concurso ?? provaObj.orgao ?? provaObj.órgão ?? '',
+        ano: provaObj.ano ?? '',
+        materia: provaObj.materia ?? provaObj.matéria ?? provaObj.disciplina ?? '',
+        fase: provaObj.fase ?? ''
+      };
+    } else {
+      arr = [parsed];
+    }
+  } else {
+    return { valid: [], errors: ['Formato JSON não reconhecido.'], totalBlocks: 0 };
+  }
+
+  const valid = [];
+  const errors = [];
+  arr.forEach((item, idx) => {
+    const res = sanitizeQuestion(item, nextQuestionId() + valid.length, inheritedMeta);
+    if (res.error) errors.push(`Item #${idx + 1}: ${res.error}`);
+    else valid.push(res.question);
+  });
+  return { valid, errors, totalBlocks: arr.length };
+}
+
+function syncDraftFromForm() {
+  const form = document.querySelector('form[data-form="addSingle"]');
+  if (!form) return;
+  const fd = new FormData(form);
+  QBuilder.draft.banca = fd.get('banca') || QBuilder.draft.banca;
+  QBuilder.draft.ano = fd.get('ano') || QBuilder.draft.ano;
+  QBuilder.draft.materia = fd.get('materia') || QBuilder.draft.materia;
+  QBuilder.draft.gabarito = fd.get('gabarito') || QBuilder.draft.gabarito;
+  QBuilder.draft.assunto = fd.get('assunto') ?? QBuilder.draft.assunto;
+  QBuilder.draft.enunciado = fd.get('enunciado') ?? QBuilder.draft.enunciado;
+  QBuilder.draft.resolucao = fd.get('resolucao') ?? QBuilder.draft.resolucao;
+  LETTERS.forEach(l => { QBuilder.draft[l] = fd.get('alt_' + l) ?? QBuilder.draft[l]; });
+  const posEl = $('#qImgPos');
+  if (posEl) QBuilder.draft.imagemPos = posEl.value;
+}
+
+function renderManageQuestionsSection() {
+  const search = (QBuilder.manageSearch || '').trim().toLowerCase();
+  const filtered = QUESTIONS.filter(q => {
+    if (QBuilder.manageFilter === 'custom' && !q.custom) return false;
+    if (QBuilder.manageFilter === 'base' && q.custom) return false;
+    if (!search) return true;
+    const hay = `${q.id} ${q.banca} ${q.ano} ${q.materia} ${q.assunto} ${stripHtml(q.enunciado)}`.toLowerCase();
+    return hay.includes(search);
+  });
+
+  const filterBtn = (k, label, count) => {
+    const active = QBuilder.manageFilter === k;
+    return `<button type="button" data-qmanagefilter="${k}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${active ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-500'}">${label} (${count})</button>`;
+  };
+
+  const rowsHtml = filtered.length
+    ? filtered.map(q => {
+        const isCustom = !!q.custom;
+        return `
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 p-3.5 flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                <span class="px-2 py-0.5 rounded-md border text-[11px] font-bold ${BANCA_STYLE[q.banca] || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700'}">${esc(q.banca)}</span>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">${esc(q.ano)}</span>
+                <span class="px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-[11px] font-semibold">${esc(q.materia)}</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">· ${esc(q.assunto)}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isCustom ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}">${isCustom ? 'Sua questão' : 'Base'}</span>
+                <span class="text-[11px] text-slate-400">Gab: <strong>${esc(q.gabarito)}</strong></span>
+              </div>
+              <div class="enunciado text-sm text-slate-700 dark:text-slate-200 line-clamp-2 overflow-hidden">${q.enunciado || '<em>Questão com imagem</em>'}</div>
+            </div>
+            <button type="button" data-act="deleteQuestion" data-qid="${esc(q.id)}"
+              class="shrink-0 px-3 py-2 rounded-xl border border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition flex items-center gap-1.5"
+              title="Excluir esta questão">
+              <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+              <span class="hidden sm:inline">Excluir</span>
+            </button>
+          </div>`;
+      }).join('')
+    : `<div class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        Nenhuma questão encontrada com o filtro atual.
+      </div>`;
+
+  return `
+    <div id="manageQuestionsBox" class="mt-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-base font-extrabold flex items-center gap-2">
+            <i data-lucide="list-checks" class="h-4 w-4 text-indigo-500"></i> Gerenciar e Excluir Questões Individualmente
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Clique em <strong>Excluir</strong> ao lado da questão desejada para removê-la do banco.</p>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          ${filterBtn('all', 'Todas', QUESTIONS.length)}
+          ${filterBtn('custom', 'Minhas', QUESTIONS.filter(q => q.custom).length)}
+          ${filterBtn('base', 'Base', QUESTIONS.filter(q => !q.custom).length)}
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="relative">
+          <input id="qManageSearch" type="text" value="${esc(QBuilder.manageSearch)}"
+            class="input" placeholder="Buscar por banca, ano, matéria, assunto ou trecho do enunciado...">
+        </div>
+      </div>
+
+      <div class="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">${rowsHtml}</div>
+    </div>`;
+}
+
+function renderAddQuestions() {
+  const d = QBuilder.draft;
+  const bancasList = CONCURSOS.filter(c => c !== 'Todos');
+  const tabBtn = (m, label, icon) => {
+    const active = QBuilder.mode === m;
+    return `<button data-qmode="${m}" class="px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition ${active ? 'bg-indigo-600 text-white shadow shadow-indigo-500/25' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-500'}">
+      <i data-lucide="${icon}" class="h-4 w-4"></i>${label}
+    </button>`;
+  };
+
+  let bodyHtml = '';
+  if (QBuilder.mode === 'single') {
+    bodyHtml = `
+      <form data-form="addSingle" onsubmit="return false" class="space-y-4">
+        <div class="grid sm:grid-cols-4 gap-3">
+          <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Banca / Concurso</span>
+            <select name="banca" class="input mt-1">
+              ${bancasList.map(b => `<option value="${b}" ${d.banca === b ? 'selected' : ''}>${b}</option>`).join('')}
+            </select>
+          </label>
+          <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Ano</span>
+            <input name="ano" type="number" class="input mt-1" value="${esc(d.ano)}" min="1980" max="2035">
+          </label>
+          <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Matéria</span>
+            <select name="materia" class="input mt-1">
+              ${['Matemática', 'Física', 'Química', 'Português', 'Inglês'].map(m => `<option value="${m}" ${d.materia === m ? 'selected' : ''}>${m}</option>`).join('')}
+            </select>
+          </label>
+          <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Gabarito</span>
+            <select name="gabarito" class="input mt-1">
+              ${LETTERS.map(l => `<option value="${l}" ${d.gabarito === l ? 'selected' : ''}>Alternativa ${l}</option>`).join('')}
+            </select>
+          </label>
+        </div>
+
+        <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Assunto / Tópico</span>
+          <input name="assunto" class="input mt-1" value="${esc(d.assunto)}" placeholder="Ex.: Números Complexos, Cinemática, Estequiometria...">
+        </label>
+
+        <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Enunciado (aceita LaTeX com $...$ ou $$...$$)</span>
+          <textarea name="enunciado" rows="4" class="input mt-1 font-mono text-xs sm:text-sm" placeholder="Ex.: Determine o módulo de $z = 3 + 4i$...">${esc(d.enunciado)}</textarea>
+        </label>
+
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 p-3.5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="image" class="h-4 w-4 text-indigo-500"></i> Imagem da questão (opcional — figura, gráfico ou circuito)
+            </span>
+            <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              Exibir em:
+              <select id="qImgPos" class="input !py-1 !px-2.5 !w-auto text-xs">
+                <option value="enunciado" ${d.imagemPos === 'enunciado' ? 'selected' : ''}>Enunciado</option>
+                <option value="resolucao" ${d.imagemPos === 'resolucao' ? 'selected' : ''}>Resolução</option>
+              </select>
+            </label>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-400 text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition">
+              <i data-lucide="image-plus" class="h-4 w-4 text-indigo-500"></i> Escolher arquivo de imagem
+              <input id="qImgFile" type="file" accept="image/*" class="hidden">
+            </label>
+            ${d.imagem ? `<button type="button" data-act="removeDraftImg" class="px-3 py-2 rounded-xl border border-rose-500/40 text-rose-500 hover:bg-rose-500/10 text-xs font-semibold transition flex items-center gap-1.5">
+              <i data-lucide="trash-2" class="h-3.5 w-3.5"></i> Remover imagem
+            </button>` : '<span class="text-[11px] text-slate-500 dark:text-slate-400">PNG, JPG ou WebP (até ~1,5 MB)</span>'}
+          </div>
+          ${d.imagem ? `<div class="pt-1"><img src="${d.imagem}" alt="Prévia da imagem da questão" class="max-h-56 rounded-xl border border-slate-200 dark:border-slate-800 object-contain bg-white p-1"></div>` : ''}
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-3">
+          ${LETTERS.map(l => `<label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Alternativa ${l}</span>
+            <input name="alt_${l}" class="input mt-1 font-mono text-xs sm:text-sm" value="${esc(d[l] || '')}" placeholder="Ex.: $5$">
+          </label>`).join('')}
+        </div>
+
+        <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Resolução comentada</span>
+          <textarea name="resolucao" rows="3" class="input mt-1 font-mono text-xs sm:text-sm" placeholder="Passo a passo da resolução e conferência...">${esc(d.resolucao)}</textarea>
+        </label>
+
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button type="button" data-act="submitForm" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition flex items-center gap-2">
+            <i data-lucide="plus-circle" class="h-4 w-4"></i> Salvar questão no banco
+          </button>
+          <button type="button" data-act="clearDraft" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Limpar campos</button>
+        </div>
+      </form>`;
+  } else if (QBuilder.mode === 'bulk') {
+    bodyHtml = `
+      <div class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-xs text-slate-500 dark:text-slate-400">Separe questões por <strong>===</strong> (ou cole várias questões na sequência começando por <strong>BANCA:</strong> ou <strong>ENUNCIADO:</strong>).</p>
+          <button data-act="fillBulkSample" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="h-3.5 w-3.5 text-indigo-500"></i> Preencher 2 questões de exemplo
+          </button>
+        </div>
+        <textarea id="bulkInput" rows="12" class="input font-mono text-xs leading-relaxed" placeholder="BANCA: EFOMM | ANO: 2025 | MATERIA: Matemática | ASSUNTO: Geometria&#10;ENUNCIADO: ...&#10;A: ...&#10;B: ...&#10;C: ...&#10;D: ...&#10;E: ...&#10;GABARITO: A&#10;RESOLUCAO: ...&#10;===&#10;...">${esc(QBuilder.bulkText)}</textarea>
+        <div class="flex flex-wrap gap-2">
+          <button data-act="runBulkImport" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition flex items-center gap-2">
+            <i data-lucide="upload" class="h-4 w-4"></i> Importar questões em massa
+          </button>
+          <button data-act="clearImportBox" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Limpar caixa</button>
+        </div>
+      </div>`;
+  } else {
+    bodyHtml = `
+      <div class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-xs text-slate-500 dark:text-slate-400">Cole um <strong>array JSON</strong> ou objeto com <code>"prova"</code> + <code>"questoes"</code> (aceita campo opcional <code>"imagem"</code>).</p>
+          <button data-act="fillJsonSample" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
+            <i data-lucide="braces" class="h-3.5 w-3.5 text-indigo-500"></i> Preencher exemplo JSON
+          </button>
+        </div>
+        <textarea id="jsonInput" rows="12" class="input font-mono text-xs leading-relaxed" placeholder='{"prova":{"banca":"ITA","ano":2027,"materia":"Matemática"},"questoes":[{"numero":1,"assunto":"Álgebra","enunciado":"...","alternativas":{"A":"...","B":"...","C":"...","D":"...","E":"..."},"gabarito":"B","resolucao":"..."}]}'>${esc(QBuilder.jsonText)}</textarea>
+        <div class="flex flex-wrap gap-2">
+          <button data-act="runJsonImport" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition flex items-center gap-2">
+            <i data-lucide="upload" class="h-4 w-4"></i> Importar JSON
+          </button>
+          <button data-act="clearImportBox" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Limpar caixa</button>
+        </div>
+      </div>`;
+  }
+
+  let reportHtml = '';
+  if (QBuilder.report) {
+    const rep = QBuilder.report;
+    reportHtml = `
+      <div class="mt-4 rounded-xl border ${rep.errors.length ? 'border-amber-500/40 bg-amber-500/10' : 'border-emerald-500/40 bg-emerald-500/10'} p-4 text-sm slide-up">
+        <div class="font-bold">${rep.added} questão(ões) adicionada(s) de ${rep.totalBlocks} bloco(s) analisado(s).</div>
+        ${rep.errors.length ? `<ul class="mt-2 list-disc pl-5 text-xs text-rose-600 dark:text-rose-300 space-y-1">${rep.errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul>` : ''}
+      </div>`;
+  }
+
+  $('#addQuestionsRoot').innerHTML = `
+    <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-extrabold tracking-tight">Adicionar &amp; Importar Questões</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Banco ativo: <strong>${QUESTIONS.length}</strong> questões (${customQuestions.length} adicionadas por você neste navegador).</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button data-act="exportJson" class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition">
+          <i data-lucide="download" class="h-4 w-4 text-indigo-500"></i> Copiar / Baixar JSON
+        </button>
+        ${customQuestions.length ? `<button data-act="clearCustomQuestions" class="px-3.5 py-2 rounded-xl border border-rose-500/40 text-rose-500 hover:bg-rose-500/10 text-xs font-semibold flex items-center gap-1.5 transition">
+          <i data-lucide="trash-2" class="h-4 w-4"></i> Remover minhas questões (${customQuestions.length})
+        </button>` : ''}
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+      <div class="flex flex-wrap gap-2 mb-5">
+        ${tabBtn('single', 'Cadastro Avulso (+ Imagem)', 'file-plus')}
+        ${tabBtn('bulk', 'Texto em Massa (===)', 'layers')}
+        ${tabBtn('json', 'Importar JSON', 'code-2')}
+      </div>
+      ${bodyHtml}
+      ${reportHtml}
+    </div>
+
+    ${renderManageQuestionsSection()}`;
+
+  typeset($('#manageQuestionsBox'));
+  icons();
+}
+
+function syncImportBuffers() {
+  if (QBuilder.mode === 'single') syncDraftFromForm();
+  const bulkEl = $('#bulkInput');
+  const jsonEl = $('#jsonInput');
+  if (bulkEl) QBuilder.bulkText = bulkEl.value;
+  if (jsonEl) QBuilder.jsonText = jsonEl.value;
+}
+
+function handleSingleAdd(form) {
+  syncDraftFromForm();
+  const d = QBuilder.draft;
+  const candidate = {
+    banca: d.banca,
+    ano: d.ano,
+    materia: d.materia,
+    assunto: d.assunto,
+    enunciado: d.enunciado,
+    imagem: d.imagem,
+    imagemPos: d.imagemPos,
+    alternativas: { A: d.A, B: d.B, C: d.C, D: d.D, E: d.E },
+    gabarito: d.gabarito,
+    resolucao: d.resolucao
+  };
+  const check = sanitizeQuestion(candidate, nextQuestionId());
+  if (check.error) {
+    QBuilder.report = { added: 0, totalBlocks: 1, errors: [check.error] };
+    renderAddQuestions();
+    return toast(esc(check.error), 'bad');
+  }
+  const added = addQuestionsToBank([check.question]);
+  QBuilder.draft = {
+    banca: candidate.banca, ano: candidate.ano, materia: candidate.materia, assunto: '',
+    enunciado: '', imagem: '', imagemPos: 'enunciado',
+    A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
+  };
+  QBuilder.report = { added, totalBlocks: 1, errors: [] };
+  applyFilters();
+  render();
+  renderAddQuestions();
+  toast(`✅ ${added} questão adicionada ao banco!`, 'good');
+}
+
+function handleBulkImport() {
+  syncImportBuffers();
+  const parsed = parseStructuredText(QBuilder.bulkText);
+  const added = addQuestionsToBank(parsed.valid);
+  QBuilder.report = { added, totalBlocks: parsed.totalBlocks, errors: parsed.errors };
+  if (added > 0) {
+    QBuilder.bulkText = '';
+    applyFilters();
+    render();
+    toast(`✅ ${added} questão(ões) importada(s)!`, 'good');
+  } else {
+    toast('Nenhuma questão válida encontrada', 'bad');
+  }
+  renderAddQuestions();
+}
+
+function handleJsonImport() {
+  syncImportBuffers();
+  const parsed = parseJsonQuestions(QBuilder.jsonText);
+  const added = addQuestionsToBank(parsed.valid);
+  QBuilder.report = { added, totalBlocks: parsed.totalBlocks, errors: parsed.errors };
+  if (added > 0) {
+    QBuilder.jsonText = '';
+    applyFilters();
+    render();
+    toast(`✅ ${added} questão(ões) importada(s) via JSON!`, 'good');
+  } else {
+    toast('Erro ao importar JSON', 'bad');
+  }
+  renderAddQuestions();
+}
+
+function exportBankJson() {
+  const payload = JSON.stringify(QUESTIONS, null, 2);
+  copyText(payload);
+  try {
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'radiano-questoes.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) {}
+}
+
+async function clearCustomQuestions() {
+  if (!(await askConfirm(`Remover todas as ${customQuestions.length} questões adicionadas por você? As questões base permanecem.`, 'Remover'))) return;
+  lsDel(CUSTOM_Q_KEY);
+  rebuildQuestionsBank();
+  QBuilder.report = null;
+  applyFilters();
+  render();
+  renderAddQuestions();
+  toast('Questões personalizadas removidas', 'bad');
+}
+
+/* =====================================================================
+   VIEW: QUESTÕES
+   ===================================================================== */
+function chip(group, value, active) {
+  const on = 'bg-indigo-600 text-white border-indigo-600 shadow shadow-indigo-500/30';
+  const off = 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400';
+  return `<button data-filter="${group}" data-value="${value}" class="px-3 py-1.5 rounded-lg border text-sm font-medium transition ${active ? on : off}">${value}</button>`;
+}
+function renderFilters() {
+  $('#fConcurso').innerHTML = CONCURSOS.map(c => chip('concurso', c, state.concurso === c)).join('');
+  $('#fAno').innerHTML      = availableYears().map(y => chip('ano', y, String(state.ano) === String(y))).join('');
+  $('#fMateria').innerHTML  = MATERIAS.map(m => chip('materia', m, state.materia === m)).join('');
+  $('#fStatus').innerHTML = STATUS.map(s => {
+    const act = state.status === s.k;
+    return `<button data-filter="status" data-value="${s.k}" class="px-1 py-2 rounded-lg text-xs font-semibold transition ${act ? 'bg-white dark:bg-slate-950 shadow text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">${s.l}</button>`;
+  }).join('');
+}
+function renderNav() {
+  $('#listCount').textContent = `${state.list.length} questão(ões)`;
+  $('#navPills').innerHTML = state.list.length
+    ? state.list.map((id, i) => {
+        const p = db.progress[id];
+        let c = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+        if (p) c = p.correct ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/40' : 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/40';
+        const cur = i === state.idx ? 'ring-2 ring-indigo-500' : '';
+        return `<button data-nav="${i}" class="h-9 w-9 rounded-lg border text-sm font-bold transition hover:scale-105 ${c} ${cur}">${i + 1}</button>`;
+      }).join('')
+    : '<span class="text-sm text-slate-500">—</span>';
+
+  const st = statsFrom(db.progress);
+  $('#stDone').textContent = st.solved;
+  $('#stHit').textContent = st.hits;
+  $('#stRate').textContent = st.solved ? Math.round((st.hits / st.solved) * 100) + '%' : '0%';
+}
+
+function optionClass(q, letter, answered, p) {
+  const base = 'group flex items-stretch rounded-xl border transition';
+  if (answered) {
+    if (letter === q.gabarito) return `${base} border-emerald-500 bg-emerald-500/10`;
+    if (letter === p.chosen && !p.correct) return `${base} border-rose-500 bg-rose-500/10`;
+    return `${base} border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60`;
+  }
+  if (state.selected === letter) return `${base} border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/30`;
+  return `${base} border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-indigo-400`;
+}
+function letterBadge(q, letter, answered, p) {
+  let c = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+  if (answered && letter === q.gabarito) c = 'bg-emerald-500 text-white';
+  else if (answered && letter === p.chosen && !p.correct) c = 'bg-rose-500 text-white';
+  else if (!answered && state.selected === letter) c = 'bg-indigo-600 text-white';
+  return `<span class="h-8 w-8 shrink-0 grid place-items-center rounded-full text-sm font-bold ${c}">${letter}</span>`;
+}
+
+function renderQuestion() {
+  const area = $('#qArea');
+  const q = currentQ();
+
+  if (!q) {
+    area.innerHTML = `
+      <div class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 p-10 text-center slide-up">
+        <div class="mx-auto h-14 w-14 rounded-2xl bg-indigo-500/10 grid place-items-center mb-4"><i data-lucide="search-x" class="h-7 w-7 text-indigo-500"></i></div>
+        <h2 class="text-xl font-bold mb-1">Nenhuma questão encontrada</h2>
+        <p class="text-slate-500 dark:text-slate-400 mb-5">Não há questões para esta combinação de filtros ainda. Tente outra banca, ano, matéria ou status, ou adicione novas questões.</p>
+        <div class="flex flex-wrap justify-center gap-2">
+          <button data-act="clear" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition">Limpar filtros</button>
+          <button data-route="adicionar" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">+ Adicionar questões</button>
+        </div>
+      </div>`;
+    icons();
+    return;
+  }
+
+  const answered = isAnswered(q);
+  const p = db.progress[q.id];
+  const struck = state.struck[q.id] || [];
+  const imgHtml = q.imagem
+    ? `<div class="my-4"><img src="${q.imagem}" alt="Figura da questão" class="max-h-80 max-w-full rounded-xl border border-slate-200 dark:border-slate-800 object-contain bg-white p-1.5"></div>`
+    : '';
+
+  const opts = LETTERS.filter(l => q.alternativas[l]).map(l => {
+    const isStruck = struck.includes(l);
+    const mark = answered && l === q.gabarito ? '<i data-lucide="check-circle-2" class="h-5 w-5 text-emerald-500 shrink-0"></i>'
+               : answered && p.chosen === l && !p.correct ? '<i data-lucide="x-circle" class="h-5 w-5 text-rose-500 shrink-0"></i>' : '';
+    const strikeBtn = answered ? '' : `
+      <button data-act="strike" data-letter="${l}" class="px-3 grid place-items-center rounded-r-xl text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-l border-slate-200 dark:border-slate-800"
+        title="${isStruck ? 'Restaurar alternativa' : 'Eliminar alternativa (ou clique com o botão direito)'}" aria-label="${isStruck ? 'Restaurar' : 'Eliminar'} alternativa ${l}">
+        <i data-lucide="${isStruck ? 'eye' : 'scissors'}" class="h-4 w-4"></i>
+      </button>`;
+    return `
+      <div class="${optionClass(q, l, answered, p)}" data-option="${l}">
+        <button data-act="select" data-letter="${l}" ${answered ? 'disabled' : ''} class="flex-1 min-w-0 flex items-center gap-3 text-left px-3 py-3 ${answered ? 'cursor-default' : ''}">
+          ${letterBadge(q, l, answered, p)}
+          <span class="flex-1 min-w-0 overflow-x-auto ${isStruck ? 'line-through opacity-40' : ''}">${q.alternativas[l]}</span>
+          ${mark}
+        </button>
+        ${strikeBtn}
+      </div>`;
+  }).join('');
+
+  let feedback = '';
+  if (answered) {
+    const ok = p.correct;
+    feedback = `
+      <div class="mt-5 rounded-xl border ${ok ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-rose-500/40 bg-rose-500/10'} p-4 flex items-start gap-3 slide-up">
+        <i data-lucide="${ok ? 'party-popper' : 'target'}" class="h-6 w-6 shrink-0 ${ok ? 'text-emerald-500' : 'text-rose-500'}"></i>
+        <div>
+          <div class="font-bold ${ok ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}">
+            ${ok ? 'Resposta correta!' : `Resposta incorreta — gabarito: alternativa ${q.gabarito}`}
+          </div>
+          <div class="text-sm text-slate-600 dark:text-slate-300">
+            ${ok ? 'Você ganhou' : 'Pelo esforço, você ganhou'} <strong>+${p.gained || 0} XP</strong> nesta questão.
+            <span class="text-slate-500 dark:text-slate-400">Novas tentativas não somam XP.</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-4 sm:p-5 slide-up">
+        <div class="flex items-center gap-2 mb-3 font-bold text-indigo-600 dark:text-indigo-300">
+          <i data-lucide="lightbulb" class="h-5 w-5"></i> Resolução comentada
+        </div>
+        <div class="resolucao text-[15px] leading-relaxed overflow-x-auto">${q.resolucao}</div>
+        ${q.imagemPos === 'resolucao' ? imgHtml : ''}
+      </div>`;
+  }
+
+  const actions = answered ? `
+      <button data-act="retry" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold text-sm transition flex items-center gap-2">
+        <i data-lucide="rotate-ccw" class="h-4 w-4"></i> Refazer (sem XP)
+      </button>
+      <button data-act="next" ${state.idx >= state.list.length - 1 ? 'disabled' : ''} class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition flex items-center gap-2">
+        Próxima <i data-lucide="arrow-right" class="h-4 w-4"></i>
+      </button>`
+    : `
+      <button data-act="answer" ${state.selected ? '' : 'disabled'} class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold transition shadow-lg shadow-indigo-500/20 flex items-center gap-2">
+        <i data-lucide="check" class="h-5 w-5"></i> Responder
+      </button>`;
+
+  area.innerHTML = `
+    <article class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm slide-up">
+      <div class="flex flex-wrap items-center gap-2 px-4 sm:px-6 pt-4 sm:pt-5">
+        <span class="px-2.5 py-1 rounded-lg border text-xs font-bold ${BANCA_STYLE[q.banca] || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700'}">${esc(q.banca)}</span>
+        <span class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300">${esc(q.ano)}</span>
+        <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">${esc(q.materia)}</span>
+        <span class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">· ${esc(q.assunto)}</span>
+        <span class="ml-auto text-xs text-slate-500 dark:text-slate-400 font-medium">Questão ${state.idx + 1} de ${state.list.length}</span>
+      </div>
+
+      <div class="px-4 sm:px-6 py-5">
+        <div class="enunciado text-[16px] sm:text-[17px] leading-relaxed overflow-x-auto">${q.enunciado}</div>
+        ${q.imagemPos !== 'resolucao' ? imgHtml : ''}
+
+        <div class="mt-6 space-y-2.5">${opts}</div>
+        ${answered ? '' : `<p class="mt-3 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><i data-lucide="scissors" class="h-3.5 w-3.5"></i> Elimine alternativas com a tesoura ou clique com o botão direito sobre elas.</p>`}
+
+        <div class="mt-5 flex flex-wrap items-center gap-3">${actions}</div>
+        ${feedback}
+      </div>
+
+      <div class="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3">
+        <button data-act="prev" ${state.idx === 0 ? 'disabled' : ''} class="text-sm font-semibold flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition">
+          <i data-lucide="chevron-left" class="h-4 w-4"></i> Anterior
+        </button>
+        <button data-act="next" ${state.idx >= state.list.length - 1 ? 'disabled' : ''} class="text-sm font-semibold flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition">
+          Próxima <i data-lucide="chevron-right" class="h-4 w-4"></i>
+        </button>
+      </div>
+    </article>`;
+
+  typeset(area);
+  icons();
+}
+function render() { renderFilters(); renderNav(); renderQuestion(); icons(); }
+
+/* =====================================================================
+   VIEW: AMIGOS & RANKING
+   ===================================================================== */
+function subjectBars(subjects) {
+  const rows = Object.entries(subjects || {}).map(([m, v]) => ({ m, ...v, t: v.hit + v.err })).filter(r => r.t > 0).sort((a, b) => b.t - a.t);
+  if (!rows.length) return '<p class="text-sm text-slate-500 dark:text-slate-400">Ainda sem questões resolvidas.</p>';
+  return rows.map(r => {
+    const pct = Math.round((r.hit / r.t) * 100);
+    return `<div>
+      <div class="flex justify-between text-sm mb-1"><span class="font-semibold">${esc(r.m)}</span>
+        <span class="text-xs text-slate-500 dark:text-slate-400">${r.hit} acertos · ${r.err} erros · ${pct}%</span></div>
+      <div class="h-2 rounded-full bg-rose-500/30 overflow-hidden"><div class="h-full bg-emerald-500" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+function strongWeak(subjects) {
+  const rows = Object.entries(subjects || {}).map(([m, v]) => ({ m, t: v.hit + v.err, pct: v.hit / (v.hit + v.err || 1) })).filter(r => r.t > 0);
+  if (!rows.length) return '';
+  rows.sort((a, b) => b.pct - a.pct || b.t - a.t);
+  const strong = rows[0], weak = rows[rows.length - 1];
+  const tag = (cls, icon, label, r) => `<span class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold ${cls}"><i data-lucide="${icon}" class="h-3.5 w-3.5"></i>${label}: ${esc(r.m)} (${Math.round(r.pct * 100)}%)</span>`;
+  return `<div class="flex flex-wrap gap-2 mb-4">
+    ${tag('border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300', 'trending-up', 'Ponto forte', strong)}
+    ${rows.length > 1 && weak.m !== strong.m ? tag('border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-300', 'trending-down', 'Atenção', weak) : ''}
+  </div>`;
+}
+function activityList(acts) {
+  if (!acts || !acts.length) return '<p class="text-sm text-slate-500 dark:text-slate-400">Sem atividade recente.</p>';
+  return `<ul class="space-y-2">${acts.slice(0, 5).map(a => `
+    <li class="flex items-start gap-2 text-sm">
+      <i data-lucide="${a.ok ? 'check-circle-2' : 'x-circle'}" class="h-4 w-4 mt-0.5 shrink-0 ${a.ok ? 'text-emerald-500' : 'text-rose-500'}"></i>
+      <span class="flex-1">${esc(a.text)}</span><span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">${ago(a.at)}</span>
+    </li>`).join('')}</ul>`;
+}
+function cmpRow(label, mine, theirs, fmt = v => v) {
+  const diff = mine - theirs;
+  const tone = diff > 0 ? 'text-emerald-500' : diff < 0 ? 'text-rose-500' : 'text-slate-500';
+  return `<div class="flex items-center justify-between text-sm py-1.5">
+    <span class="text-slate-500 dark:text-slate-400">${label}</span>
+    <span><span class="font-semibold">${fmt(mine)}</span> <span class="text-slate-400">vs</span> <span class="font-semibold">${fmt(theirs)}</span>
+    <span class="${tone} text-xs ml-1">(${diff > 0 ? '+' : ''}${diff})</span></span></div>`;
+}
+const idLine = p => (p.isMe && !account) ? 'Faça login para ter @usuario e código' : `@${esc(p.handle)} · ${esc(p.code)}`;
+
+function myCodeCard() {
+  if (!account) {
+    return `<div class="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-4 flex flex-wrap items-center gap-3">
+      <i data-lucide="lock" class="h-5 w-5 text-indigo-500"></i>
+      <div class="flex-1 min-w-[200px]"><div class="font-bold">Entre para ter seu código de amigo</div>
+      <div class="text-sm text-slate-600 dark:text-slate-300">Os amigos de exemplo abaixo são só para você ver a tela. Com uma conta, você adiciona colegas reais e aparece no ranking deles.</div></div>
+      <button data-act="openAuth" data-tab="signup" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition">Criar conta / Entrar</button>
+    </div>`;
+  }
+  return `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-wrap items-center gap-3">
+    ${avatar(account.name, 'h-11 w-11 text-lg')}
+    <div class="flex-1 min-w-[180px]"><div class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Seu código de amigo</div>
+      <div class="font-extrabold text-lg">${esc(account.code)} <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">· @${esc(account.handle)}</span></div></div>
+    <button data-copy="${esc(account.code)}" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition"><i data-lucide="copy" class="h-4 w-4"></i> Código</button>
+    <button data-copy="@${esc(account.handle)}" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition"><i data-lucide="copy" class="h-4 w-4"></i> @usuario</button>
+  </div>`;
+}
+function addCard() {
+  const hint = USE_SUPABASE ? 'Digite o @usuario ou #código do seu amigo.'
+    : 'Digite @usuario, #código ou e-mail (contas deste navegador). Para testar: <strong>#ITA999</strong> ou <strong>@rafa_ita</strong>.';
+  return `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+    <h3 class="font-bold mb-2 flex items-center gap-2"><i data-lucide="user-plus" class="h-4 w-4 text-indigo-500"></i> Adicionar amigo</h3>
+    <form data-form="addFriend" onsubmit="return false" class="flex gap-2">
+      <input name="q" value="${esc(F.query)}" class="input flex-1 min-w-0" placeholder="@usuario, #CODIGO ou e-mail" autocapitalize="none" autocomplete="off">
+      <button type="button" data-act="submitForm" class="px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition">Adicionar</button>
+    </form>
+    ${F.addError ? `<p class="mt-2 text-sm text-rose-500">${esc(F.addError)}</p>` : ''}
+    <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">${hint}</p>
+  </div>`;
+}
+function friendRow(p, pos) {
+  const r = rankInfo(p.xp).cur.name;
+  const sel = F.selected === p.id;
+  const medal = pos === 1 ? 'text-amber-500' : pos === 2 ? 'text-slate-400' : pos === 3 ? 'text-orange-600' : 'text-slate-500 dark:text-slate-400';
+  const cls = sel ? 'border-indigo-500 ring-2 ring-indigo-500/30 bg-indigo-500/10'
+    : p.isMe ? 'border-indigo-500/40 bg-indigo-500/5 hover:border-indigo-400'
+    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-indigo-400';
+  const stat = (icon, color, txt, title) => `<span class="inline-flex items-center gap-1" title="${title}"><i data-lucide="${icon}" class="h-3.5 w-3.5 ${color}"></i>${txt}</span>`;
+  return `<button data-friend="${esc(p.id)}" class="w-full text-left rounded-xl border p-3 transition flex gap-3 items-center ${cls}">
+    <span class="w-7 text-center font-extrabold text-lg ${medal}">${pos}</span>
+    ${avatar(p.name)}
+    <div class="min-w-0 flex-1">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="font-bold truncate">${esc(p.name)}</span>
+        ${p.isMe ? '<span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-600 text-white">VOCÊ</span>' : ''}
+        ${p.sample ? '<span class="px-1.5 py-0.5 rounded-md text-[10px] font-semibold border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">exemplo</span>' : ''}
+      </div>
+      <div class="text-xs text-slate-500 dark:text-slate-400 truncate">${idLine(p)}</div>
+      <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium">
+        ${stat('shield', 'text-indigo-500', esc(r), 'Patente')}
+        ${stat('zap', 'text-amber-500', p.xp + ' XP', 'XP')}
+        ${stat('flame', 'text-orange-500', p.streak + ' d', 'Sequência diária')}
+        ${stat('check-check', 'text-sky-500', p.solved + ' resolvidas', 'Questões resolvidas')}
+        ${stat('target', 'text-emerald-500', pctOf(p) + '% acerto', 'Aproveitamento')}
+      </div>
+    </div>
+  </button>`;
+}
+function listCard(rows) {
+  const sortBtn = (k, label, icon) => `<button data-sort="${k}" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${F.sort === k ? 'bg-white dark:bg-slate-950 shadow text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}"><i data-lucide="${icon}" class="h-3.5 w-3.5"></i>${label}</button>`;
+  let body;
+  if (F.loading) body = '<p class="text-sm text-slate-500 py-6 text-center">Carregando amigos…</p>';
+  else if (F.error) body = `<p class="text-sm text-rose-500 py-6 text-center">${esc(F.error)}</p>`;
+  else body = `<div class="space-y-2">${rows.map((p, i) => friendRow(p, i + 1)).join('')}</div>
+      ${rows.length === 1 ? '<p class="text-sm text-slate-500 dark:text-slate-400 mt-3 text-center">Você ainda não tem amigos na lista. Adicione alguém pelo código!</p>' : ''}`;
+  return `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <h3 class="font-bold flex items-center gap-2"><i data-lucide="trophy" class="h-4 w-4 text-amber-500"></i> Ranking <span class="text-xs font-medium text-slate-500 dark:text-slate-400">(${Math.max(0, rows.length - 1)} amigo${rows.length - 1 === 1 ? '' : 's'})</span></h3>
+      <div class="flex gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">${sortBtn('xp', 'XP', 'zap')}${sortBtn('streak', 'Sequência', 'flame')}</div>
+    </div>${body}</div>`;
+}
+function detailPlaceholder() {
+  return `<div class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 p-8 text-center">
+    <div class="mx-auto h-12 w-12 rounded-2xl bg-indigo-500/10 grid place-items-center mb-3"><i data-lucide="mouse-pointer-click" class="h-6 w-6 text-indigo-500"></i></div>
+    <div class="font-bold mb-1">Selecione um amigo</div>
+    <p class="text-sm text-slate-500 dark:text-slate-400">Clique em alguém do ranking para ver matérias fortes/fracas, atividade recente e comparar com o seu progresso.</p></div>`;
+}
+function detailCard(p) {
+  const ri = rankInfo(p.xp);
+  const me = meProfile();
+  const tile = (label, val, cls = '') => `<div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-center"><div class="text-xl font-extrabold ${cls}">${val}</div><div class="text-[11px] text-slate-500 dark:text-slate-400">${label}</div></div>`;
+  const removeBtn = (!p.isMe && account)
+    ? `<button data-act="removeFriend" data-id="${esc(p.id)}" class="mt-4 w-full py-2 rounded-xl border border-rose-500/40 text-rose-500 text-sm font-semibold hover:bg-rose-500/10 transition flex items-center justify-center gap-1.5"><i data-lucide="user-minus" class="h-4 w-4"></i> Remover amigo</button>` : '';
+  return `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 slide-up">
+    <div class="flex items-center gap-3 mb-4">
+      ${avatar(p.name, 'h-14 w-14 text-2xl')}
+      <div class="min-w-0"><div class="font-extrabold text-lg truncate">${esc(p.name)}${p.isMe ? ' <span class="text-xs font-semibold text-indigo-500">(você)</span>' : ''}</div>
+      <div class="text-xs text-slate-500 dark:text-slate-400 truncate">${idLine(p)}</div>
+      <span class="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300"><i data-lucide="shield" class="h-3.5 w-3.5"></i>${esc(ri.cur.name)}</span></div>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mb-3">
+      ${tile('XP', p.xp, 'text-amber-500')}${tile('Sequência (dias)', p.streak, 'text-orange-500')}
+      ${tile('Resolvidas', p.solved)}${tile('Aproveitamento', pctOf(p) + '%', 'text-emerald-500')}
+    </div>
+    <div class="mb-4"><div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-violet-500" style="width:${ri.pct}%"></div></div>
+      <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">${ri.next ? `Faltam ${ri.next.min - p.xp} XP para ${ri.next.name}` : 'Patente máxima'}</div></div>
+    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Desempenho por matéria</h4>
+    ${strongWeak(p.subjects)}
+    <div class="space-y-3 mb-5">${subjectBars(p.subjects)}</div>
+    ${p.isMe ? '' : `<h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Você vs ${esc(p.name.split(' ')[0])}</h4>
+      <div class="mb-5 divide-y divide-slate-100 dark:divide-slate-800">${cmpRow('XP', me.xp, p.xp)}${cmpRow('Sequência (dias)', me.streak, p.streak)}${cmpRow('Aproveitamento', pctOf(me), pctOf(p), v => v + '%')}</div>`}
+    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Atividade recente</h4>
+    ${activityList(p.activity)}
+    ${removeBtn}
+  </div>`;
+}
+function renderFriends() {
+  const rows = [...F.list, meProfile()].sort((a, b) => (b[F.sort] - a[F.sort]) || (b.xp - a.xp) || a.name.localeCompare(b.name));
+  const sel = rows.find(r => r.id === F.selected);
+  $('#friendsRoot').innerHTML = `
+    <div class="mb-5"><h1 class="text-2xl font-extrabold tracking-tight">Amigos &amp; Ranking</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Compare XP, sequência diária e aproveitamento com quem estuda junto.</p></div>
+    <div class="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-5">
+      <div class="space-y-4 min-w-0">${myCodeCard()}${addCard()}${listCard(rows)}</div>
+      <aside id="friendDetail" class="lg:sticky lg:top-40 self-start">${sel ? detailCard(sel) : detailPlaceholder()}</aside>
+    </div>`;
+  icons();
+}
+async function loadFriends() {
+  F.loading = true; F.error = null; renderFriends();
+  try { F.list = await social().list(); }
+  catch (e) { F.error = (e && e.message) || 'Falha ao carregar amigos.'; F.list = []; }
+  F.loading = false; renderFriends();
+}
+async function addFriend(q) {
+  if (!account) { toast('Entre na sua conta para adicionar amigos', 'bad'); return openAuth('signin'); }
+  q = (q || '').trim(); if (!q) return;
+  F.query = q;
+  let res;
+  try { res = await social().add(q); } catch (e) { res = { error: (e && e.message) || 'Falha ao adicionar.' }; }
+  if (res.error) { F.addError = res.error; renderFriends(); return; }
+  F.addError = null; F.query = '';
+  try { F.list = await social().list(); } catch (e) {}
+  F.selected = res.profile.id;
+  renderFriends();
+  toast(`🤝 ${esc(res.profile.name)} adicionado!`, 'good');
+}
+async function removeFriend(id) {
+  const p = F.list.find(x => x.id === id);
+  if (!(await askConfirm(`Remover ${p ? p.name : 'este amigo'} da sua lista?`, 'Remover'))) return;
+  try { await social().remove(id); F.list = await social().list(); } catch (e) { toast('Falha ao remover', 'bad'); return; }
+  F.selected = null; renderFriends(); toast('Amigo removido', 'bad');
+}
+
+/* =====================================================================
+   VIEW: PERFIL / CONTA
+   ===================================================================== */
+function renderProfile() {
+  const me = meProfile();
+  const ri = rankInfo(db.xp);
+  const tile = (label, val, cls = '') => `<div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-center"><div class="text-2xl font-extrabold ${cls}">${val}</div><div class="text-[11px] text-slate-500 dark:text-slate-400">${label}</div></div>`;
+  const card = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5';
+
+  let identity;
+  if (account) {
+    const form = P.editing ? `
+      <form data-form="profileEdit" onsubmit="return false" class="mt-4 grid sm:grid-cols-2 gap-3">
+        <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Nome de exibição</span>
+          <input name="name" class="input mt-1" value="${esc(account.name)}" maxlength="30"></label>
+        <label class="block"><span class="text-xs font-semibold text-slate-500 dark:text-slate-400">@usuario</span>
+          <input name="handle" class="input mt-1" value="@${esc(account.handle)}" maxlength="21" autocapitalize="none"></label>
+        ${P.error ? `<p class="sm:col-span-2 text-sm text-rose-500">${esc(P.error)}</p>` : ''}
+        <div class="sm:col-span-2 flex flex-wrap gap-2">
+          <button type="button" data-act="submitForm" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition">Salvar</button>
+          <button type="button" data-act="cancelEdit" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancelar</button>
+          <button type="button" data-act="regenCode" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5"><i data-lucide="refresh-cw" class="h-4 w-4"></i> Gerar novo código</button>
+        </div>
+      </form>` : '';
+    identity = `<div class="${card}">
+      <div class="flex flex-wrap items-center gap-4">
+        ${avatar(account.name, 'h-16 w-16 text-3xl')}
+        <div class="flex-1 min-w-[200px]">
+          <div class="text-xl font-extrabold">${esc(account.name)}</div>
+          <div class="text-sm text-slate-500 dark:text-slate-400">${esc(account.email)}</div>
+          <div class="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
+            <span class="px-2 py-1 rounded-lg ${USE_SUPABASE ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-amber-500/15 text-amber-600 dark:text-amber-300'}">${USE_SUPABASE ? 'Conta Supabase' : 'Conta demonstração (localStorage)'}</span>
+            <button data-copy="@${esc(account.handle)}" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-indigo-500 transition">@${esc(account.handle)}</button>
+            <button data-copy="${esc(account.code)}" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-indigo-500 transition">${esc(account.code)}</button>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button data-act="editProfile" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5"><i data-lucide="pencil" class="h-4 w-4"></i> Editar</button>
+          <button data-act="signOut" class="px-4 py-2 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 text-white text-sm font-semibold transition flex items-center gap-1.5"><i data-lucide="log-out" class="h-4 w-4"></i> Sair</button>
+        </div>
+      </div>${form}</div>`;
+  } else {
+    identity = `<div class="${card} flex flex-wrap items-center gap-4">
+      <div class="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-800 grid place-items-center"><i data-lucide="user-round" class="h-8 w-8 text-slate-500"></i></div>
+      <div class="flex-1 min-w-[220px]"><div class="text-xl font-extrabold">Modo visitante</div>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Seu progresso está salvo só neste navegador. Crie uma conta para ter @usuario, código de amigo e entrar no ranking — o que você já fez será transferido para a conta nova.</p></div>
+      <div class="flex gap-2"><button data-act="openAuth" data-tab="signin" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Entrar</button>
+      <button data-act="openAuth" data-tab="signup" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition">Criar conta</button></div></div>`;
+  }
+
+  $('#profileRoot').innerHTML = `
+    <div class="mb-5"><h1 class="text-2xl font-extrabold tracking-tight">Perfil / Conta</h1></div>
+    <div class="space-y-4">
+      ${identity}
+      <div class="${card}">
+        <h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="bar-chart-3" class="h-4 w-4 text-indigo-500"></i> Estatísticas</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+          ${tile('XP', db.xp, 'text-amber-500')}${tile('Patente', esc(ri.cur.name), 'text-indigo-500 !text-xl')}
+          ${tile('Ofensiva atual (dias)', me.streak, 'text-orange-500')}${tile('Melhor ofensiva', Math.max(db.streak.best || 0, me.streak), 'text-orange-500')}
+          ${tile('Resolvidas', me.solved)}${tile('Acertos', me.hits, 'text-emerald-500')}${tile('Erros', me.solved - me.hits, 'text-rose-500')}${tile('Aproveitamento', pctOf(me) + '%', 'text-indigo-500')}
+        </div>
+        <div class="mb-5"><div class="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-violet-500" style="width:${ri.pct}%"></div></div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">${ri.next ? `${ri.cur.name} → ${ri.next.name}: faltam ${ri.next.min - db.xp} XP` : 'Patente máxima alcançada!'}</div></div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Por matéria</h4>
+        ${strongWeak(me.subjects)}<div class="space-y-3">${subjectBars(me.subjects)}</div>
+      </div>
+      <div class="${card}"><h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="history" class="h-4 w-4 text-indigo-500"></i> Atividade recente</h3>${activityList(me.activity)}</div>
+      <div class="${card}">
+        <h3 class="font-bold mb-2 flex items-center gap-2"><i data-lucide="database" class="h-4 w-4 text-indigo-500"></i> Armazenamento e autenticação</h3>
+        <p class="text-sm text-slate-600 dark:text-slate-300">${USE_SUPABASE
+          ? 'Autenticação via <strong>Supabase Auth</strong> ativa. O progresso é sincronizado com a tabela <code>profiles</code>.'
+          : 'O Supabase <strong>não está configurado</strong>, então o app roda em modo demonstração (localStorage). Para ativar contas reais, preencha <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code> no início do script — a interface continua igual.'}</p>
+        <button data-act="resetProgress" class="mt-4 text-sm text-rose-500 hover:underline flex items-center gap-1.5"><i data-lucide="trash-2" class="h-4 w-4"></i> Zerar meu progresso (XP, ofensiva e questões)</button>
+      </div>
+    </div>`;
+  icons();
+}
+
+/* =====================================================================
+   MODAL DE CONTA
+   ===================================================================== */
+function setAuthTab(tab) {
+  authTab = tab;
+  const up = tab === 'signup';
+  $('#signupFields').classList.toggle('hidden', !up);
+  $('#authTitle').textContent = up ? 'Criar conta' : 'Entrar';
+  $('#authSubmit').textContent = up ? 'Criar conta' : 'Entrar';
+  $('#authSub').textContent = up ? 'Salve seu progresso e entre no ranking dos amigos.' : 'Bem-vindo de volta, cadete!';
+  $('#authForm').elements.password.autocomplete = up ? 'new-password' : 'current-password';
+  $$('[data-authtab]').forEach(b => {
+    const on = b.dataset.authtab === tab;
+    b.className = 'py-2 rounded-lg text-sm font-semibold transition ' + (on ? 'bg-white dark:bg-slate-950 shadow text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400');
+  });
+  authMsg('', '');
+}
+function authMsg(err, info) {
+  const e = $('#authError'), i = $('#authInfo');
+  e.textContent = err; e.classList.toggle('hidden', !err);
+  i.textContent = info; i.classList.toggle('hidden', !info);
+}
+function openAuth(tab = 'signin') {
+  $('#authModeNote').innerHTML = USE_SUPABASE
+    ? 'Autenticação por <strong>Supabase Auth</strong>.'
+    : '<strong>Modo demonstração:</strong> a conta e a senha ficam salvas apenas no localStorage deste navegador (senha com hash SHA-256). Não use uma senha real. Preencha <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code> no código para ativar contas de verdade.';
+  setAuthTab(tab);
+  const m = $('#authModal'); m.classList.remove('hidden'); m.classList.add('flex');
+  icons();
+  setTimeout(() => { const f = $('#authForm').elements[tab === 'signup' ? 'name' : 'email']; if (f) f.focus(); }, 50);
+}
+function closeAuth() { const m = $('#authModal'); m.classList.add('hidden'); m.classList.remove('flex'); $('#authForm').reset(); authMsg('', ''); }
+const authOpen = () => !$('#authModal').classList.contains('hidden');
+
+let confirmResolve = null;
+const confirmOpen = () => !$('#confirmModal').classList.contains('hidden');
+function askConfirm(msg, okLabel = 'Confirmar') {
+  return new Promise(resolve => {
+    if (confirmResolve) confirmResolve(false);
+    confirmResolve = resolve;
+    $('#confirmMsg').innerHTML = esc(msg).replace(/\n/g, '<br>');
+    $('#confirmYes').textContent = okLabel;
+    const m = $('#confirmModal'); m.classList.remove('hidden'); m.classList.add('flex');
+  });
+}
+function closeConfirm(value) {
+  const m = $('#confirmModal'); m.classList.add('hidden'); m.classList.remove('flex');
+  const r = confirmResolve; confirmResolve = null;
+  if (r) r(value);
+}
+async function resetProgress() {
+  if (!(await askConfirm('Zerar XP, ofensiva e progresso das questões? (Seus amigos e conta são mantidos.)', 'Zerar'))) return;
+  db = { ...freshData(), friends: db.friends };
+  state.struck = {}; state.retry = {};
+  saveDB(); applyFilters(); updateHeader(); render(); renderProfile();
+  toast('Progresso zerado', 'bad');
+}
+
+async function runForm(form) {
+  if (!form) return;
+  const kind = form.dataset.form;
+  if (kind === 'auth') return submitAuth(form);
+  if (kind === 'addFriend') return addFriend(new FormData(form).get('q'));
+  if (kind === 'addSingle') return handleSingleAdd(form);
+  if (kind === 'profileEdit') {
+    const fd = new FormData(form);
+    try {
+      account = await Auth.updateProfile(account, { name: fd.get('name'), handle: fd.get('handle') });
+      P.editing = false; P.error = null;
+      scheduleCloudPush(); updateHeader(); renderProfile(); toast('Perfil atualizado', 'good');
+    } catch (err) { P.error = err.message; renderProfile(); }
+  }
+}
+
+async function submitAuth(form) {
+  if (authBusy) return;
+  const fd = new FormData(form);
+  const v = { email: fd.get('email'), password: fd.get('password'), name: fd.get('name'), handle: fd.get('handle') };
+  authBusy = true; $('#authSubmit').disabled = true; authMsg('', '');
+  try {
+    const res = authTab === 'signup' ? await Auth.signUp(v) : await Auth.signIn(v);
+    if (res.needsConfirm) { authMsg('', 'Conta criada! Confirme seu e-mail pelo link que enviamos e depois entre.'); setAuthTab('signin'); $('#authInfo').textContent = 'Conta criada! Confirme seu e-mail pelo link que enviamos e depois entre.'; $('#authInfo').classList.remove('hidden'); return; }
+    await enterAccount(res.account);
+    closeAuth();
+    toast(authTab === 'signup' ? `🎖️ Conta criada! Olá, ${esc(res.account.name)}` : `👋 Bem-vindo, ${esc(res.account.name)}`, 'good');
+    if (migratedFromGuest) { migratedFromGuest = false; setTimeout(() => toast('Seu progresso de visitante foi transferido para a conta', 'level'), 600); }
+  } catch (e) {
+    authMsg((e && e.message) || 'Não foi possível concluir.', '');
+  } finally { authBusy = false; $('#authSubmit').disabled = false; }
+}
+
+async function enterAccount(acc) {
+  account = acc;
+  db = bootstrapData(acc.id);
+  await cloudPull();
+  afterIdentityChange();
+}
+async function signOut() {
+  try { await Auth.signOut(); } catch (e) {}
+  account = null;
+  db = bootstrapData('guest');
+  afterIdentityChange();
+  toast('Você saiu da conta', 'bad');
+}
+function afterIdentityChange() {
+  state.struck = {}; state.retry = {};
+  F.list = []; F.selected = null; F.addError = null; F.query = ''; P.editing = false; P.error = null;
+  applyFilters(); updateHeader(); render();
+  if (route === 'amigos') loadFriends();
+  if (route === 'perfil') renderProfile();
+}
+
+/* =====================================================================
+   ROTAS
+   ===================================================================== */
+const ROUTES = ['questoes', 'adicionar', 'amigos', 'perfil'];
+function setRoute(r, push = true) {
+  if (!ROUTES.includes(r)) r = 'questoes';
+  route = r;
+  ROUTES.forEach(x => $('#view-' + x).classList.toggle('hidden', x !== r));
+  $$('[data-route]').forEach(b => { b.dataset.active = String(b.dataset.route === r); });
+  $('#kbHint').classList.toggle('hidden', r !== 'questoes');
+  if (push && location.hash !== '#/' + r) location.hash = '#/' + r;
+  if (r === 'questoes') { renderQuestion(); }
+  if (r === 'adicionar') { renderAddQuestions(); }
+  if (r === 'amigos') loadFriends();
+  if (r === 'perfil') renderProfile();
+  window.scrollTo(0, 0);
+}
+
+/* =====================================================================
+   AÇÕES — questões
+   ===================================================================== */
+function selectOption(letter) {
+  const q = currentQ();
+  if (!q || isAnswered(q)) return;
+  if ((state.struck[q.id] || []).includes(letter)) return;
+  state.selected = letter;
+  renderQuestion();
+}
+function toggleStrike(letter) {
+  const q = currentQ();
+  if (!q || isAnswered(q)) return;
+  const arr = state.struck[q.id] = state.struck[q.id] || [];
+  const i = arr.indexOf(letter);
+  if (i >= 0) arr.splice(i, 1);
+  else { arr.push(letter); if (state.selected === letter) state.selected = null; }
+  renderQuestion();
+}
+function answer() {
+  const q = currentQ();
+  if (!q || !state.selected || isAnswered(q)) return;
+
+  const correct = state.selected === q.gabarito;
+  const first = !db.progress[q.id];
+  const rankBefore = rankInfo(db.xp).cur.name;
+  let gained = first ? 0 : (db.progress[q.id].gained || 0);
+
+  if (first) { gained = correct ? 10 : 2; db.xp += gained; }
+  db.progress[q.id] = { chosen: state.selected, correct, gained, at: Date.now() };
+  db.log.push({ qid: q.id, correct, at: Date.now() });
+  if (db.log.length > 60) db.log = db.log.slice(-60);
+  delete state.retry[q.id];
+
+  let streakUp = false;
+  if (correct) streakUp = registerHitToday();
+  saveDB();
+
+  updateHeader(true);
+  render();
+
+  if (first) toast(correct ? `✅ Acertou! +${gained} XP` : `💪 +${gained} XP pelo esforço`, correct ? 'good' : 'bad');
+  else toast(correct ? 'Acertou no treino extra (sem XP)' : 'Errou no treino extra (sem XP)', 'bad');
+  if (streakUp) setTimeout(() => toast(`🔥 Ofensiva: ${db.streak.count} dia(s)!`, 'fire'), 500);
+  const rankAfter = rankInfo(db.xp).cur.name;
+  if (rankAfter !== rankBefore) setTimeout(() => toast(`🎖️ Nova patente: ${rankAfter}!`, 'level'), 1000);
+}
+function go(delta) {
+  const n = state.idx + delta;
+  if (n < 0 || n >= state.list.length) return;
+  state.idx = n; state.selected = null;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function retry() {
+  const q = currentQ(); if (!q) return;
+  state.retry[q.id] = true; state.selected = null; state.struck[q.id] = [];
+  renderQuestion();
+}
+function setFilter(group, value) { state[group] = value; applyFilters(); render(); }
+
+/* =====================================================================
+   EVENTOS
+   ===================================================================== */
+document.addEventListener('input', e => {
+  if (e.target && e.target.id === 'qManageSearch') {
+    QBuilder.manageSearch = e.target.value;
+    const box = $('#manageQuestionsBox');
+    if (box) {
+      const selStart = e.target.selectionStart;
+      const selEnd = e.target.selectionEnd;
+      box.outerHTML = renderManageQuestionsSection();
+      typeset($('#manageQuestionsBox'));
+      icons();
+      const inputNow = $('#qManageSearch');
+      if (inputNow) {
+        inputNow.focus();
+        try { inputNow.setSelectionRange(selStart, selEnd); } catch (err) {}
+      }
+    }
+  }
+});
+
+document.addEventListener('change', e => {
+  if (e.target && e.target.id === 'qImgFile') {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) {
+      e.target.value = '';
+      return toast('Imagem grande demais (use até ~1,5 MB)', 'bad');
+    }
+    syncDraftFromForm();
+    const reader = new FileReader();
+    reader.onload = () => {
+      QBuilder.draft.imagem = String(reader.result || '');
+      renderAddQuestions();
+      toast('Imagem anexada à questão', 'good');
+    };
+    reader.readAsDataURL(file);
+  }
+  if (e.target && e.target.id === 'qImgPos') {
+    QBuilder.draft.imagemPos = e.target.value;
+  }
+});
+
+document.addEventListener('click', e => {
+  const rt = e.target.closest('[data-route]');
+  if (rt) return setRoute(rt.dataset.route);
+
+  const qm = e.target.closest('[data-qmode]');
+  if (qm) {
+    syncImportBuffers();
+    QBuilder.mode = qm.dataset.qmode;
+    QBuilder.report = null;
+    return renderAddQuestions();
+  }
+
+  const qmf = e.target.closest('[data-qmanagefilter]');
+  if (qmf) {
+    QBuilder.manageFilter = qmf.dataset.qmanagefilter;
+    return renderAddQuestions();
+  }
+
+  const cp = e.target.closest('[data-copy]');
+  if (cp) return copyText(cp.dataset.copy);
+
+  const at = e.target.closest('[data-authtab]');
+  if (at) return setAuthTab(at.dataset.authtab);
+
+  if (e.target === $('#confirmModal')) return closeConfirm(false);
+  if (e.target === $('#authModal')) return closeAuth();
+
+  const fr = e.target.closest('[data-friend]');
+  if (fr) {
+    F.selected = fr.dataset.friend; renderFriends();
+    if (window.innerWidth < 1024) $('#friendDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  const so = e.target.closest('[data-sort]');
+  if (so) { F.sort = so.dataset.sort; return renderFriends(); }
+
+  const f = e.target.closest('[data-filter]');
+  if (f) return setFilter(f.dataset.filter, f.dataset.value);
+
+  const n = e.target.closest('[data-nav]');
+  if (n) { state.idx = +n.dataset.nav; state.selected = null; render(); return; }
+
+  const a = e.target.closest('[data-act]');
+  if (!a || a.disabled) return;
+  switch (a.dataset.act) {
+    case 'select': selectOption(a.dataset.letter); break;
+    case 'strike': toggleStrike(a.dataset.letter); break;
+    case 'answer': answer(); break;
+    case 'next': go(1); break;
+    case 'prev': go(-1); break;
+    case 'retry': retry(); break;
+    case 'clear': state.concurso = 'Todos'; state.ano = 'Todos'; state.materia = 'Todas'; state.status = 'todas'; applyFilters(); render(); break;
+    case 'account': account ? setRoute('perfil') : openAuth('signin'); break;
+    case 'openAuth': openAuth(a.dataset.tab || 'signin'); break;
+    case 'closeAuth': closeAuth(); break;
+    case 'signOut': signOut(); break;
+    case 'editProfile': P.editing = true; P.error = null; renderProfile(); break;
+    case 'cancelEdit': P.editing = false; P.error = null; renderProfile(); break;
+    case 'regenCode':
+      Auth.regenCode(account).then(acc => { account = acc; updateHeader(); renderProfile(); toast('Novo código: ' + esc(acc.code), 'good'); })
+        .catch(err => { P.error = err.message; renderProfile(); });
+      break;
+    case 'removeFriend': removeFriend(a.dataset.id); break;
+    case 'resetProgress': resetProgress(); break;
+    case 'submitForm': runForm(a.closest('form[data-form]')); break;
+    case 'confirmYes': closeConfirm(true); break;
+    case 'confirmNo': closeConfirm(false); break;
+    case 'removeDraftImg':
+      syncDraftFromForm();
+      QBuilder.draft.imagem = '';
+      renderAddQuestions();
+      break;
+    case 'fillBulkSample': QBuilder.bulkText = SAMPLE_BULK; QBuilder.report = null; renderAddQuestions(); break;
+    case 'fillJsonSample': QBuilder.jsonText = SAMPLE_JSON; QBuilder.report = null; renderAddQuestions(); break;
+    case 'clearImportBox':
+      if (QBuilder.mode === 'bulk') QBuilder.bulkText = '';
+      else QBuilder.jsonText = '';
+      QBuilder.report = null;
+      renderAddQuestions();
+      break;
+    case 'clearDraft':
+      QBuilder.draft = {
+        banca: 'EFOMM', ano: 2025, materia: 'Matemática', assunto: '',
+        enunciado: '', imagem: '', imagemPos: 'enunciado',
+        A: '', B: '', C: '', D: '', E: '', gabarito: 'C', resolucao: ''
+      };
+      QBuilder.report = null;
+      renderAddQuestions();
+      break;
+    case 'runBulkImport': handleBulkImport(); break;
+    case 'runJsonImport': handleJsonImport(); break;
+    case 'exportJson': exportBankJson(); break;
+    case 'clearCustomQuestions': clearCustomQuestions(); break;
+    case 'deleteQuestion': deleteQuestionById(a.dataset.qid); break;
+  }
+});
+
+document.addEventListener('contextmenu', e => {
+  const opt = e.target.closest('[data-option]');
+  if (!opt || route !== 'questoes') return;
+  e.preventDefault();
+  toggleStrike(opt.dataset.option);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (confirmOpen()) return closeConfirm(false); if (authOpen()) return closeAuth(); }
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+    const form = e.target.closest('form[data-form]');
+    if (form) { e.preventDefault(); runForm(form); return; }
+  }
+  if (route !== 'questoes' || authOpen() || confirmOpen()) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || ''))) return;
+  const q = currentQ();
+  if (!q) return;
+  const k = e.key.toLowerCase();
+  if (k.length === 1 && 'abcde'.includes(k)) selectOption(k.toUpperCase());
+  else if (e.key === 'Enter' && e.target === document.body) { isAnswered(q) ? go(1) : answer(); }
+  else if (e.key === 'ArrowRight') go(1);
+  else if (e.key === 'ArrowLeft') go(-1);
+});
+
+window.addEventListener('hashchange', () => {
+  const r = location.hash.replace('#/', '');
+  if (r !== route) setRoute(r, false);
+});
+
+$('#themeBtn').addEventListener('click', () => {
+  const dark = document.documentElement.classList.toggle('dark');
+  lsSet(THEME_KEY, dark ? 'dark' : 'light');
+});
+$('#filtersToggle').addEventListener('click', () => $('#filtersPanel').classList.toggle('hidden'));
+
+/* =====================================================================
+   INICIALIZAÇÃO
+   ===================================================================== */
+window.addEventListener('DOMContentLoaded', async () => {
+  rebuildQuestionsBank();
+
+  if (!lsGet(DATA_PREFIX + 'guest')) {
+    const v1 = lsGet('radiano:v1');
+    if (v1 && typeof v1 === 'object') lsSet(DATA_PREFIX + 'guest', normData({ xp: v1.xp, streak: v1.streak, progress: v1.progress }));
+  }
+
+  let acc = null;
+  try { acc = await Auth.restore(); } catch (e) { console.warn('Sessão não restaurada:', e); }
+  if (acc) { account = acc; db = bootstrapData(acc.id); await cloudPull(); }
+  else { account = null; db = bootstrapData('guest'); }
+
+  if (USE_SUPABASE) {
+    sbClient.auth.onAuthStateChange(evt => {
+      if (evt === 'SIGNED_OUT' && account) { account = null; db = bootstrapData('guest'); afterIdentityChange(); }
+    });
+  }
+
+  applyFilters();
+  updateHeader();
+  render();
+  const r = location.hash.replace('#/', '');
+  setRoute(ROUTES.includes(r) ? r : 'questoes', false);
+  window.addEventListener('load', () => { typeset($('#qArea')); icons(); });
+});
+</script>
+</body>
+</html>
