@@ -177,6 +177,16 @@
         <div id="fMateria" class="flex flex-wrap gap-2"></div>
       </section>
       <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <div class="flex items-center justify-between mb-2.5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Assunto</h3>
+          <button type="button" data-act="clearAssunto" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Limpar</button>
+        </div>
+        <div class="relative mb-3">
+          <input id="fAssuntoSearch" type="text" class="input !py-2 !text-xs" placeholder="Buscar assunto (ex.: Logaritmos, Óptica)...">
+        </div>
+        <div id="fAssunto" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1"></div>
+      </section>
+      <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Status</h3>
         <div id="fStatus" class="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1"></div>
       </section>
@@ -1119,7 +1129,7 @@ const social = () => (USE_SUPABASE ? (account ? SocialSb : SocialNone) : SocialD
    ESTADO DA UI
    ===================================================================== */
 const state = {
-  concurso: 'Todos', ano: 'Todos', materia: 'Todas', status: 'todas',
+  concurso: 'Todos', ano: 'Todos', materia: 'Todas', assunto: 'Todos', assuntoQuery: '', status: 'todas',
   list: [], idx: 0, selected: null,
   struck: {},
   retry: {}
@@ -1158,14 +1168,46 @@ function statusOk(q) {
   if (state.status === 'erradas') return !!p && !p.correct;
   return true;
 }
+function baseFilteredQuestions() {
+  return QUESTIONS.filter(q =>
+    (state.concurso === 'Todos' || q.banca === state.concurso) &&
+    (state.ano === 'Todos' || String(q.ano) === String(state.ano)) &&
+    (state.materia === 'Todas' || q.materia === state.materia)
+  );
+}
+
+function availableAssuntos() {
+  const qTerm = (state.assuntoQuery || '').trim().toLowerCase();
+  const set = new Set(
+    baseFilteredQuestions()
+      .map(q => String(q.assunto || '').trim())
+      .filter(Boolean)
+  );
+  let list = Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  if (qTerm) {
+    list = list.filter(a => a.toLowerCase().includes(qTerm));
+  }
+  if (state.assunto !== 'Todos' && !list.includes(state.assunto)) {
+    list.unshift(state.assunto);
+  }
+  return ['Todos', ...list];
+}
+
 function applyFilters() {
   const validYears = availableYears();
   if (!validYears.includes(String(state.ano))) state.ano = 'Todos';
+
+  const validAssuntos = availableAssuntos();
+  if (!validAssuntos.includes(state.assunto)) state.assunto = 'Todos';
+
+  const qTerm = (state.assuntoQuery || '').trim().toLowerCase();
 
   state.list = QUESTIONS
     .filter(q => (state.concurso === 'Todos' || q.banca === state.concurso)
               && (state.ano === 'Todos' || String(q.ano) === String(state.ano))
               && (state.materia === 'Todas' || q.materia === state.materia)
+              && (state.assunto === 'Todos' || q.assunto === state.assunto)
+              && (!qTerm || String(q.assunto || '').toLowerCase().includes(qTerm))
               && statusOk(q))
     .map(q => q.id);
   state.idx = 0;
@@ -1817,6 +1859,16 @@ function renderFilters() {
   $('#fConcurso').innerHTML = CONCURSOS.map(c => chip('concurso', c, state.concurso === c)).join('');
   $('#fAno').innerHTML      = availableYears().map(y => chip('ano', y, String(state.ano) === String(y))).join('');
   $('#fMateria').innerHTML  = MATERIAS.map(m => chip('materia', m, state.materia === m)).join('');
+
+  const searchEl = $('#fAssuntoSearch');
+  if (searchEl && searchEl.value !== state.assuntoQuery) {
+    searchEl.value = state.assuntoQuery;
+  }
+  const assuntos = availableAssuntos();
+  $('#fAssunto').innerHTML = assuntos.length > 1
+    ? assuntos.map(a => chip('assunto', a, state.assunto === a)).join('')
+    : '<span class="text-xs text-slate-500 dark:text-slate-400">Nenhum assunto encontrado.</span>';
+
   $('#fStatus').innerHTML = STATUS.map(s => {
     const act = state.status === s.k;
     return `<button data-filter="status" data-value="${s.k}" class="px-1 py-2 rounded-lg text-xs font-semibold transition ${act ? 'bg-white dark:bg-slate-950 shadow text-indigo-600 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">${s.l}</button>`;
@@ -2438,6 +2490,19 @@ function setFilter(group, value) { state[group] = value; applyFilters(); render(
    EVENTOS
    ===================================================================== */
 document.addEventListener('input', e => {
+  if (e.target && e.target.id === 'fAssuntoSearch') {
+    state.assuntoQuery = e.target.value;
+    if (state.assunto !== 'Todos' && !String(state.assunto).toLowerCase().includes(state.assuntoQuery.trim().toLowerCase())) {
+      state.assunto = 'Todos';
+    }
+    applyFilters();
+    const assuntos = availableAssuntos();
+    $('#fAssunto').innerHTML = assuntos.length > 1
+      ? assuntos.map(a => chip('assunto', a, state.assunto === a)).join('')
+      : '<span class="text-xs text-slate-500 dark:text-slate-400">Nenhum assunto encontrado.</span>';
+    renderNav();
+    renderQuestion();
+  }
   if (e.target && e.target.id === 'qManageSearch') {
     QBuilder.manageSearch = e.target.value;
     const box = $('#manageQuestionsBox');
@@ -2529,7 +2594,8 @@ document.addEventListener('click', e => {
     case 'next': go(1); break;
     case 'prev': go(-1); break;
     case 'retry': retry(); break;
-    case 'clear': state.concurso = 'Todos'; state.ano = 'Todos'; state.materia = 'Todas'; state.status = 'todas'; applyFilters(); render(); break;
+    case 'clearAssunto': state.assunto = 'Todos'; state.assuntoQuery = ''; applyFilters(); render(); break;
+    case 'clear': state.concurso = 'Todos'; state.ano = 'Todos'; state.materia = 'Todas'; state.assunto = 'Todos'; state.assuntoQuery = ''; state.status = 'todas'; applyFilters(); render(); break;
     case 'account': account ? setRoute('perfil') : openAuth('signin'); break;
     case 'openAuth': openAuth(a.dataset.tab || 'signin'); break;
     case 'closeAuth': closeAuth(); break;
