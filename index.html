@@ -1129,7 +1129,7 @@ const social = () => (USE_SUPABASE ? (account ? SocialSb : SocialNone) : SocialD
    ESTADO DA UI
    ===================================================================== */
 const state = {
-  concurso: 'Todos', ano: 'Todos', materia: 'Todas', assunto: 'Todos', assuntoQuery: '', status: 'todas',
+  concursos: [], ano: 'Todos', materia: 'Todas', assuntos: [], assuntoQuery: '', status: 'todas',
   list: [], idx: 0, selected: null,
   struck: {},
   retry: {}
@@ -1170,7 +1170,7 @@ function statusOk(q) {
 }
 function baseFilteredQuestions() {
   return QUESTIONS.filter(q =>
-    (state.concurso === 'Todos' || q.banca === state.concurso) &&
+    (state.concursos.length === 0 || state.concursos.includes(q.banca)) &&
     (state.ano === 'Todos' || String(q.ano) === String(state.ano)) &&
     (state.materia === 'Todas' || q.materia === state.materia)
   );
@@ -1187,8 +1187,10 @@ function availableAssuntos() {
   if (qTerm) {
     list = list.filter(a => a.toLowerCase().includes(qTerm));
   }
-  if (state.assunto !== 'Todos' && !list.includes(state.assunto)) {
-    list.unshift(state.assunto);
+  for (let i = state.assuntos.length - 1; i >= 0; i--) {
+    if (!list.includes(state.assuntos[i])) {
+      list.unshift(state.assuntos[i]);
+    }
   }
   return ['Todos', ...list];
 }
@@ -1197,16 +1199,20 @@ function applyFilters() {
   const validYears = availableYears();
   if (!validYears.includes(String(state.ano))) state.ano = 'Todos';
 
-  const validAssuntos = availableAssuntos();
-  if (!validAssuntos.includes(state.assunto)) state.assunto = 'Todos';
+  const allContextAssuntos = new Set(
+    baseFilteredQuestions()
+      .map(q => String(q.assunto || '').trim())
+      .filter(Boolean)
+  );
+  state.assuntos = state.assuntos.filter(a => allContextAssuntos.has(a));
 
   const qTerm = (state.assuntoQuery || '').trim().toLowerCase();
 
   state.list = QUESTIONS
-    .filter(q => (state.concurso === 'Todos' || q.banca === state.concurso)
+    .filter(q => (state.concursos.length === 0 || state.concursos.includes(q.banca))
               && (state.ano === 'Todos' || String(q.ano) === String(state.ano))
               && (state.materia === 'Todas' || q.materia === state.materia)
-              && (state.assunto === 'Todos' || q.assunto === state.assunto)
+              && (state.assuntos.length === 0 || state.assuntos.includes(q.assunto))
               && (!qTerm || String(q.assunto || '').toLowerCase().includes(qTerm))
               && statusOk(q))
     .map(q => q.id);
@@ -1856,7 +1862,10 @@ function chip(group, value, active) {
   return `<button data-filter="${group}" data-value="${value}" class="px-3 py-1.5 rounded-lg border text-sm font-medium transition ${active ? on : off}">${value}</button>`;
 }
 function renderFilters() {
-  $('#fConcurso').innerHTML = CONCURSOS.map(c => chip('concurso', c, state.concurso === c)).join('');
+  $('#fConcurso').innerHTML = CONCURSOS.map(c => {
+    const active = c === 'Todos' ? state.concursos.length === 0 : state.concursos.includes(c);
+    return chip('concurso', c, active);
+  }).join('');
   $('#fAno').innerHTML      = availableYears().map(y => chip('ano', y, String(state.ano) === String(y))).join('');
   $('#fMateria').innerHTML  = MATERIAS.map(m => chip('materia', m, state.materia === m)).join('');
 
@@ -1866,7 +1875,10 @@ function renderFilters() {
   }
   const assuntos = availableAssuntos();
   $('#fAssunto').innerHTML = assuntos.length > 1
-    ? assuntos.map(a => chip('assunto', a, state.assunto === a)).join('')
+    ? assuntos.map(a => {
+        const active = a === 'Todos' ? state.assuntos.length === 0 : state.assuntos.includes(a);
+        return chip('assunto', a, active);
+      }).join('')
     : '<span class="text-xs text-slate-500 dark:text-slate-400">Nenhum assunto encontrado.</span>';
 
   $('#fStatus').innerHTML = STATUS.map(s => {
@@ -2484,7 +2496,29 @@ function retry() {
   state.retry[q.id] = true; state.selected = null; state.struck[q.id] = [];
   renderQuestion();
 }
-function setFilter(group, value) { state[group] = value; applyFilters(); render(); }
+function setFilter(group, value) {
+  if (group === 'concurso') {
+    if (value === 'Todos') {
+      state.concursos = [];
+    } else {
+      const i = state.concursos.indexOf(value);
+      if (i >= 0) state.concursos.splice(i, 1);
+      else state.concursos.push(value);
+    }
+  } else if (group === 'assunto') {
+    if (value === 'Todos') {
+      state.assuntos = [];
+    } else {
+      const i = state.assuntos.indexOf(value);
+      if (i >= 0) state.assuntos.splice(i, 1);
+      else state.assuntos.push(value);
+    }
+  } else {
+    state[group] = value;
+  }
+  applyFilters();
+  render();
+}
 
 /* =====================================================================
    EVENTOS
@@ -2492,13 +2526,17 @@ function setFilter(group, value) { state[group] = value; applyFilters(); render(
 document.addEventListener('input', e => {
   if (e.target && e.target.id === 'fAssuntoSearch') {
     state.assuntoQuery = e.target.value;
-    if (state.assunto !== 'Todos' && !String(state.assunto).toLowerCase().includes(state.assuntoQuery.trim().toLowerCase())) {
-      state.assunto = 'Todos';
+    const term = state.assuntoQuery.trim().toLowerCase();
+    if (term) {
+      state.assuntos = state.assuntos.filter(a => a.toLowerCase().includes(term));
     }
     applyFilters();
     const assuntos = availableAssuntos();
     $('#fAssunto').innerHTML = assuntos.length > 1
-      ? assuntos.map(a => chip('assunto', a, state.assunto === a)).join('')
+      ? assuntos.map(a => {
+          const active = a === 'Todos' ? state.assuntos.length === 0 : state.assuntos.includes(a);
+          return chip('assunto', a, active);
+        }).join('')
       : '<span class="text-xs text-slate-500 dark:text-slate-400">Nenhum assunto encontrado.</span>';
     renderNav();
     renderQuestion();
@@ -2594,8 +2632,8 @@ document.addEventListener('click', e => {
     case 'next': go(1); break;
     case 'prev': go(-1); break;
     case 'retry': retry(); break;
-    case 'clearAssunto': state.assunto = 'Todos'; state.assuntoQuery = ''; applyFilters(); render(); break;
-    case 'clear': state.concurso = 'Todos'; state.ano = 'Todos'; state.materia = 'Todas'; state.assunto = 'Todos'; state.assuntoQuery = ''; state.status = 'todas'; applyFilters(); render(); break;
+    case 'clearAssunto': state.assuntos = []; state.assuntoQuery = ''; applyFilters(); render(); break;
+    case 'clear': state.concursos = []; state.ano = 'Todos'; state.materia = 'Todas'; state.assuntos = []; state.assuntoQuery = ''; state.status = 'todas'; applyFilters(); render(); break;
     case 'account': account ? setRoute('perfil') : openAuth('signin'); break;
     case 'openAuth': openAuth(a.dataset.tab || 'signin'); break;
     case 'closeAuth': closeAuth(); break;
